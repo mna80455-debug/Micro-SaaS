@@ -22,3 +22,4 @@ Thumbs.db
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+.vercel
