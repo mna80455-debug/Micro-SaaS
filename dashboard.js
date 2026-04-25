@@ -21,77 +21,67 @@ const connectGcal = async () => { const m = await getGcal(); return m.connectGca
 const addEventToGcal = async (d) => { const m = await getGcal(); return m.addEventToGcal?.(d); };
 
 document.addEventListener('DOMContentLoaded', initI18n);
+
+// Theme toggle - both sidebar and settings button
+function setupThemeToggle() {
+  const themeToggle = document.getElementById('themeToggle');
+  const btnToggleTheme = document.getElementById('btnToggleTheme');
+  const currentTheme = localStorage.getItem('bookflow_theme');
+  const isDark = currentTheme === 'dark';
+  
+  function toggleTheme() {
+    const isDarkNow = document.documentElement.classList.toggle('dark-theme');
+    localStorage.setItem('bookflow_theme', isDarkNow ? 'dark' : 'light');
+    
+    // Update sidebar icon
+    const sidebarIcon = themeToggle?.querySelector('i');
+    if (sidebarIcon) {
+      sidebarIcon.className = isDarkNow ? 'ph-bold ph-sun' : 'ph-bold ph-moon';
+      themeToggle.querySelector('.nav-label').textContent = isDarkNow ? 'الوضع الفاتح' : 'الوضع الداكن';
+    }
+    
+    // Update settings button icon
+    if (btnToggleTheme) {
+      btnToggleTheme.innerHTML = isDarkNow ? '<i class="ph-bold ph-sun"></i> الوضع الفاتح' : '<i class="ph-bold ph-moon"></i> الوضع الداكن';
+    }
+  }
+  
+  themeToggle?.addEventListener('click', toggleTheme);
+  btnToggleTheme?.addEventListener('click', toggleTheme);
+  
+  // Apply saved theme on load
+  if (isDark) {
+    document.documentElement.classList.add('dark-theme');
+    if (themeToggle) themeToggle.querySelector('.nav-label').textContent = 'الوضع الفاتح';
+    if (btnToggleTheme) btnToggleTheme.innerHTML = '<i class="ph-bold ph-sun"></i> الوضع الفاتح';
+  }
+}
+
+// Language toggle - translate entire site
+function setupLangToggle() {
+  const langBtn = document.getElementById('btnToggleLang');
+  
+  function toggleLang() {
+    const currentLang = localStorage.getItem('bookflow_lang') || 'ar';
+    const newLang = currentLang === 'ar' ? 'en' : 'ar';
+    localStorage.setItem('bookflow_lang', newLang);
+    location.reload(); // Reload to apply translation to all pages
+  }
+  
+  langBtn?.addEventListener('click', toggleLang);
+}
+
+// Initialize routing and theming
 document.addEventListener('DOMContentLoaded', () => {
+  setupThemeToggle();
+  setupLangToggle();
+  initI18n();
+  
   // Request notification permission
   import('./notifications.js').then(({ requestNotificationPermission }) => {
     requestNotificationPermission();
   });
 });
-document.addEventListener('DOMContentLoaded', () => {
-  const searchInput = document.getElementById('globalSearch');
-  if (!searchInput) return;
-  
-  searchInput.addEventListener('input', async (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    if (query.length < 2) return;
-    
-    const results = [];
-    const appointmentsSnapshot = await getDocs(query(collection(db, 'appointments')));
-    appointmentsSnapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.clientName?.toLowerCase().includes(query) || 
-          data.notes?.toLowerCase().includes(query)) {
-        results.push({ type: 'appointment', ...data, id: doc.id });
-      }
-    });
-    
-    const clientsSnapshot = await getDocs(query(collection(db, 'clients')));
-    clientsSnapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.name?.toLowerCase().includes(query) || 
-          data.phone?.includes(query)) {
-        results.push({ type: 'client', ...data, id: doc.id });
-      }
-    });
-    
-    showSearchResults(results.slice(0, 10));
-  });
-  
-  function showSearchResults(results) {
-    let popup = document.getElementById('searchResultsPopup');
-    if (!popup) {
-      popup = document.createElement('div');
-      popup.id = 'searchResultsPopup';
-      popup.className = 'search-results-popup';
-      searchInput.parentElement.appendChild(popup);
-    }
-    
-    if (results.length === 0) {
-      popup.innerHTML = '<div class="no-results">لا توجد نتائج</div>';
-    } else {
-      popup.innerHTML = results.map(r => `
-        <div class="search-result-item" onclick="${r.type === 'appointment' ? 'viewAppointment' : 'viewClient'}('${r.id}')">
-          <i class="ph-bold ${r.type === 'appointment' ? 'ph-calendar' : 'ph-user'}"></i>
-          <div>
-            <strong>${r.clientName || r.name}</strong>
-            <small>${r.type === 'appointment' ? r.date : r.phone}</small>
-          </div>
-        </div>
-      `).join('');
-    }
-  }
-  
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-box')) {
-      document.getElementById('searchResultsPopup')?.remove();
-    }
-  });
-});
-
-// Elements
-const btnSaveAppointment = document.getElementById('btnSaveAppointment');
-const btnSaveSettings = document.getElementById('btnSaveSettings');
-const btnCopyLink = document.getElementById('btnCopyLink');
 
 // Setup Routing Logic with Event Delegation
 function setupRouting() {
@@ -99,18 +89,6 @@ function setupRouting() {
   
   // Use event delegation on the document or sidebar
   document.addEventListener('click', (e) => {
-    // Theme toggle
-    if (e.target.closest('#themeToggle')) {
-      e.preventDefault();
-      const isDark = document.documentElement.classList.toggle('dark-theme');
-      localStorage.setItem('bookflow_theme', isDark ? 'dark' : 'light');
-      const icon = e.target.closest('#themeToggle').querySelector('i');
-      if (icon) {
-        icon.className = isDark ? 'ph-bold ph-sun' : 'ph-bold ph-moon';
-      }
-      return;
-    }
-    
     const navItem = e.target.closest('.nav-item[data-page]');
     if (!navItem) return;
 
