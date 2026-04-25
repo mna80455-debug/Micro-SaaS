@@ -861,7 +861,7 @@
     // Make functions available immediately
     window.openNewAppointmentModal = function() {
       console.log('[BookFlow] Opening appointment modal...');
-      const modal = document.getElementById('newAppointmentModal');
+      var modal = document.getElementById('newAppointmentModal');
       if (modal) {
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
@@ -872,22 +872,22 @@
     };
     
     window.closeModal = function(modalId) {
-      const modal = document.getElementById(modalId);
+      var modal = document.getElementById(modalId);
       if (modal) modal.classList.remove('open');
       document.body.style.overflow = '';
     };
     
     window.openModal = function(modalId) {
-      const modal = document.getElementById(modalId);
+      var modal = document.getElementById(modalId);
       if (modal) modal.classList.add('open');
     };
     
     window.showToast = function(msg, type) {
-      alert(type === 'error' ? '❌ ' + msg : '✅ ' + msg);
+      alert(type === 'error' ? 'Error: ' + msg : 'Success: ' + msg);
     };
     
     console.log('[BookFlow] Core functions registered');
-    </script>
+  </script>
     <script type="module" src="/dashboard.js?v=17"></script>
   <script src="/flowai.js?v=4"></script>
   <script>
