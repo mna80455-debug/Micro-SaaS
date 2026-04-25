@@ -842,59 +842,137 @@ window.deleteClient = async function() {
 async function loadStats() {
   if(!window.currentUser) return;
 
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).getTime();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+  // Load Chart.js if not loaded
+  if (!window.Chart) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+    script.onload = () => renderCharts();
+    document.head.appendChild(script);
+  } else {
+    renderCharts();
+  }
 
-  try {
-    // All appointments
-    const allAptsQ = query(collection(db, 'appointments'), where('userId', '==', window.currentUser.uid));
-    const allAptsSnap = await getDocs(allAptsQ);
-    const allApts = allAptsSnap.docs.map(d => ({id: d.id, ...d.data()}));
-    const completedApts = allApts.filter(a => a.status === 'completed');
+  async function renderCharts() {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).getTime();
 
-    animateValue('statTotalApts', 0, allApts.length, 600);
-    animateValue('statCompletedApts', 0, completedApts.length, 600);
-    animateValue('statTotalRevenue', 0, completedApts.reduce((sum, a) => sum + (a.price || 0), 0), 800);
-    animateValue('statTotalClients', 0, allApts.length ? new Set(allApts.map(a => a.clientPhone)).size : 0, 600);
+    try {
+      const allAptsQ = query(collection(db, 'appointments'), where('userId', '==', window.currentUser.uid));
+      const allAptsSnap = await getDocs(allAptsQ);
+      const allApts = allAptsSnap.docs.map(d => ({id: d.id, ...d.data()}));
+      const completedApts = allApts.filter(a => a.status === 'completed');
 
-    // This month
-    const monthApts = allApts.filter(a => a.date >= startOfMonth && a.date <= endOfMonth);
-    const monthCompleted = monthApts.filter(a => a.status === 'completed');
-    const monthCancelled = monthApts.filter(a => a.status === 'cancelled');
+      animateValue('statTotalApts', 0, allApts.length, 600);
+      animateValue('statCompletedApts', 0, completedApts.length, 600);
+      animateValue('statTotalRevenue', 0, completedApts.reduce((sum, a) => sum + (a.price || 0), 0), 800);
+      animateValue('statTotalClients', 0, allApts.length ? new Set(allApts.map(a => a.clientPhone)).size : 0, 600);
 
-    animateValue('statThisMonthApts', 0, monthApts.length, 600);
-    animateValue('statThisMonthRevenue', 0, monthCompleted.reduce((sum, a) => sum + (a.price || 0), 0), 800);
-    animateValue('statThisMonthCancelled', 0, monthCancelled.length, 600);
+      // Monthly Revenue Chart (last 6 months)
+      const months = [];
+      const monthRevenue = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const start = d.getTime();
+        const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).getTime();
+        const monthName = d.toLocaleDateString('ar', { month: 'short' });
+        months.push(monthName);
+        
+        const mRev = allApts.filter(a => a.date >= start && a.date <= end && a.status === 'completed')
+                        .reduce((sum, a) => sum + (a.price || 0), 0);
+        monthRevenue.push(mRev);
+      }
 
-    // Top clients
-    const clientBookings = {};
-    allApts.forEach(apt => {
-      const key = apt.clientName;
-      if(!clientBookings[key]) clientBookings[key] = { name: apt.clientName, count: 0, spent: 0 };
-      clientBookings[key].count++;
-      clientBookings[key].spent += apt.price || 0;
-    });
+      const revenueCtx = document.getElementById('revenueChart')?.getContext('2d');
+      if (revenueCtx) {
+        new Chart(revenueCtx, {
+          type: 'bar',
+          data: {
+            labels: months,
+            datasets: [{
+              label: 'الإيرادات (ج.م)',
+              data: monthRevenue,
+              backgroundColor: '#10B981',
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      }
 
-    const topClients = Object.values(clientBookings).sort((a, b) => b.count - a.count).slice(0, 5);
-    const topContainer = document.getElementById('topClientsList');
+      // Status Chart (Doughnut)
+      const statusCounts = {
+        completed: allApts.filter(a => a.status === 'completed').length,
+        pending: allApts.filter(a => a.status === 'pending').length,
+        cancelled: allApts.filter(a => a.status === 'cancelled').length
+      };
 
-    if(topClients.length === 0) {
-      topContainer.innerHTML = '<p style="color: var(--text-secondary);">لا توجد بيانات بعد</p>';
-    } else {
-      topContainer.innerHTML = topClients.map((c, i) => `
-        <div class="client-card" style="cursor: default;">
-          <div style="font-weight: 700; width: 24px;">${i + 1}</div>
-          <div class="client-avatar">${c.name.charAt(0).toUpperCase()}</div>
-          <div class="client-info">
-            <span class="client-name">${c.name}</span>
-            <span class="client-phone">${c.count} حجز، ${c.spent} ج.م</span>
+      const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+      if (statusCtx) {
+        new Chart(statusCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['مكتمل', 'مؤكد', 'ملغى'],
+            datasets: [{
+              data: [statusCounts.completed, statusCounts.pending, statusCounts.cancelled],
+              backgroundColor: ['#10B981', '#F59E0B', '#EF4444']
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+          }
+        });
+
+        const legendEl = document.getElementById('statusLegend');
+        if (legendEl) {
+          legendEl.innerHTML = `
+            <div class="stat-row"><span class="dot green"></span> مكتمل: ${statusCounts.completed}</div>
+            <div class="stat-row"><span class="dot amber"></span> مؤكد: ${statusCounts.pending}</div>
+            <div class="stat-row"><span class="dot danger"></span> ملغى: ${statusCounts.cancelled}</div>
+          `;
+        }
+      }
+
+      // Top clients
+      const clientBookings = {};
+      allApts.forEach(apt => {
+        const key = apt.clientName;
+        if(!clientBookings[key]) clientBookings[key] = { name: apt.clientName, count: 0, spent: 0 };
+        clientBookings[key].count++;
+        clientBookings[key].spent += apt.price || 0;
+      });
+
+      const topClients = Object.values(clientBookings).sort((a, b) => b.count - a.count).slice(0, 5);
+      const topContainer = document.getElementById('topClientsList');
+
+      if(topClients.length === 0) {
+        topContainer.innerHTML = '<p style="color: var(--text-secondary);">لا توجد بيانات بعد</p>';
+      } else {
+        topContainer.innerHTML = topClients.map((c, i) => `
+          <div class="client-card" style="cursor: default;">
+            <div style="font-weight: 700; width: 24px;">${i + 1}</div>
+            <div class="client-avatar">${c.name.charAt(0).toUpperCase()}</div>
+            <div class="client-info">
+              <span class="client-name">${c.name}</span>
+              <span class="client-phone">${c.count} حجز، ${c.spent} ج.م</span>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `).join('');
+      }
+
+    } catch(e) {
+      console.error('Stats error:', e);
     }
+  }
+}
 
   } catch(e) {
     console.error(e);

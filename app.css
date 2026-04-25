@@ -310,11 +310,48 @@
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 32px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
+
+/* Charts */
+.chart-container {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  min-height: 200px;
+}
+
+.chart-container canvas {
+  max-height: 200px;
+}
+
+.chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.stat-row .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.stat-row .dot.green { background: #10B981; }
+.stat-row .dot.amber { background: #F59E0B; }
+.stat-row .dot.danger { background: #EF4444; }
 
 .stat-card:hover {
   border-color: var(--border-teal);
