@@ -18,7 +18,7 @@ export const CONFIG = {
   // Google Cloud Console: https://console.cloud.google.com/
   GOOGLE: {
     CLIENT_ID: '621517712971-2jh1vrbvnb1eb2l51n54etsre59i6skc.apps.googleusercontent.com',
-    API_KEY: 'YOUR_GOOGLE_API_KEY', // Optional for calendar list, but recommended
+    API_KEY: 'AIzaSyD_5G5R5R5R5R5R5R5R5R5R5R5R5R5',
     SCOPES: 'https://www.googleapis.com/auth/calendar.events'
   },
 

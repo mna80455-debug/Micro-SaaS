@@ -1,36 +1,39 @@
 import { CONFIG } from './config.js';
 
-const SCOPES = CONFIG.GOOGLE.SCOPES;
-let tokenClient;
-let gapiInited = false;
-let gsisInited = false;
+const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+let tokenClient = null;
+let accessToken = null;
 
 /**
- * Initialize GAPI client
+ * Initialize Google Identity Services
  */
 export async function initGcal() {
-  return new Promise((resolve) => {
-    gapi.load('client', async () => {
-      await gapi.client.init({
-        apiKey: CONFIG.GOOGLE.API_KEY,
-        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
-      });
-      gapiInited = true;
-      checkInited(resolve);
-    });
-
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CONFIG.GOOGLE.CLIENT_ID,
-      scope: SCOPES,
-      callback: '', // defined at request time
-    });
-    gsisInited = true;
-    checkInited(resolve);
+  return new Promise((resolve, reject) => {
+    // LoadGIS script
+    if (!window.google || !window.google.accounts) {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.onload = () => initTokenClient(resolve);
+      script.onerror = reject;
+      document.head.appendChild(script);
+    } else {
+      initTokenClient(resolve);
+    }
   });
 }
 
-function checkInited(resolve) {
-  if (gapiInited && gsisInited) resolve();
+function initTokenClient(resolve) {
+  tokenClient = window.google.accounts.oauth2.initTokenClient({
+    client_id: CONFIG.GOOGLE.CLIENT_ID,
+    scope: SCOPES,
+    callback: (resp) => {
+      if (resp.access_token) {
+        accessToken = resp.access_token;
+        localStorage.setItem('gcal_token', JSON.stringify(resp));
+      }
+    }
+  });
+  if (tokenClient) resolve();
 }
 
 /**
@@ -38,31 +41,41 @@ function checkInited(resolve) {
  */
 export function connectGcal() {
   return new Promise((resolve, reject) => {
-    tokenClient.callback = async (resp) => {
-      if (resp.error !== undefined) {
+    if (!tokenClient) {
+      initGcal().then(() => {
+        tokenClient.requestAccessToken();
+        resolve();
+      });
+      return;
+    }
+    
+    tokenClient.callback = (resp) => {
+      if (resp.error) {
         reject(resp);
         return;
       }
+      accessToken = resp.access_token;
       localStorage.setItem('gcal_token', JSON.stringify(resp));
       resolve(resp);
     };
 
-    if (gapi.client.getToken() === null) {
-      tokenClient.requestAccessToken({ prompt: 'consent' });
-    } else {
-      tokenClient.requestAccessToken({ prompt: '' });
-    }
+    tokenClient.requestAccessToken();
   });
 }
 
 /**
- * Add an event to Google Calendar
+ * Add an event to Google Calendar via REST API
  */
 export async function addEventToGcal(appointment) {
-  const token = JSON.parse(localStorage.getItem('gcal_token'));
-  if (!token) return;
-
-  gapi.client.setToken(token);
+  const stored = localStorage.getItem('gcal_token');
+  if (!stored) return;
+  
+  const token = JSON.parse(stored);
+  accessToken = token.access_token;
+  
+  if (!accessToken) {
+    await connectGcal();
+  }
 
   const startDateTime = new Date(appointment.date);
   const [hours, minutes] = appointment.time.split(':');
@@ -72,31 +85,51 @@ export async function addEventToGcal(appointment) {
   endDateTime.setMinutes(startDateTime.getMinutes() + (appointment.duration || 30));
 
   const event = {
-    'summary': `BookFlow: ${appointment.clientName} - ${appointment.service}`,
-    'description': `عميل: ${appointment.clientName}\nخدمة: ${appointment.service}\nهاتف: ${appointment.clientPhone}\nملاحظات: ${appointment.notes || ''}`,
-    'start': {
-      'dateTime': startDateTime.toISOString(),
-      'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+    summary: `BookFlow: ${appointment.clientName} - ${appointment.service}`,
+    description: `عميل: ${appointment.clientName}\nخدمة: ${appointment.service}\nهاتف: ${appointment.clientPhone}\nملاحظات: ${appointment.notes || ''}`,
+    start: {
+      dateTime: startDateTime.toISOString(),
+      timeZone: 'Africa/Cairo'
     },
-    'end': {
-      'dateTime': endDateTime.toISOString(),
-      'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+    end: {
+      dateTime: endDateTime.toISOString(),
+      timeZone: 'Africa/Cairo'
     }
   };
 
   try {
-    const response = await gapi.client.calendar.events.insert({
-      'calendarId': 'primary',
-      'resource': event
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(event)
     });
-    console.log('✅ Event created in Google Calendar:', response.result.htmlLink);
-    return response;
+    
+    const result = await response.json();
+    console.log('✅ Event created in Google Calendar:', result.htmlLink);
+    return result;
   } catch (err) {
     console.error('❌ Error creating GCal event:', err);
     if (err.status === 401) {
-      // Token expired, re-auth
       await connectGcal();
       return addEventToGcal(appointment);
     }
   }
+}
+
+/**
+ * Check if connected
+ */
+export function isGcalConnected() {
+  return !!localStorage.getItem('gcal_token');
+}
+
+/**
+ * Disconnect from Google Calendar
+ */
+export function disconnectGcal() {
+  localStorage.removeItem('gcal_token');
+  accessToken = null;
 }

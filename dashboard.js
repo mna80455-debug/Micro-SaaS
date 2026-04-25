@@ -7,7 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { showToast } from './components/toast.js';
 import { initI18n } from './i18n.js';
-import { openWhatsAppNotify } from './notifications.js';
+import { openWhatsAppNotify, scheduleAppointmentReminder, sendEmailNotification } from './notifications.js';
 // gcal loaded lazily to avoid breaking the module if gapi/google aren't ready
 let _gcal = null;
 async function getGcal() {
@@ -468,6 +468,26 @@ btnSaveAppointment?.addEventListener('click', async () => {
       addEventToGcal(aptData).catch(e => console.warn("GCal sync error", e));
     }
 
+    // Send confirmation email to client
+    if(phone && phone.includes('@')) {
+      sendEmailNotification('template_client_new', {
+        client_name: clientName,
+        service_name: service || 'خدمة عامة',
+        appointment_date: dateVal,
+        appointment_time: timeVal,
+        business_name: window.currentUser?.displayName || 'مكتبك'
+      }).catch(e => console.warn("Email send error", e));
+    }
+
+    // Send notification to provider
+    sendEmailNotification('template_provider_new', {
+      client_name: clientName,
+      client_phone: phone,
+      service_name: service || 'خدمة عامة',
+      appointment_date: dateVal,
+      appointment_time: timeVal
+    }).catch(e => console.warn("Provider email error", e));
+
     // Save/Update Client quick path (simplified for demo)
     await addDoc(collection(db, 'clients'), {
        userId: window.currentUser.uid,
@@ -478,6 +498,10 @@ btnSaveAppointment?.addEventListener('click', async () => {
     });
 
     showToast('تم حفظ الموعد ✅', 'success');
+    
+    // Schedule browser reminder (1 hour before)
+    scheduleAppointmentReminder(aptData, 60);
+    
     window.closeModal('newAppointmentModal');
     
     // Reset form
@@ -1214,5 +1238,33 @@ window.exportToPDF = async function() {
     showToast('تم إنشاء التقرير', 'success');
   } catch(e) {
     showToast('خطأ في إنشاء التقرير', 'error');
+  }
+};
+
+window.exportToGoogleSheets = async function() {
+  try {
+    const appointments = [];
+    const clients = [];
+    
+    const aptSnap = await getDocs(query(collection(db, 'appointments'), orderBy('date', 'desc'), limit(100)));
+    aptSnap.forEach(d => appointments.push(d.data()));
+    
+    const cliSnap = await getDocs(query(collection(db, 'clients')));
+    cliSnap.forEach(d => clients.push(d.data()));
+    
+    // Create CSV content
+    let csv = 'Name,Phone,Service,Date,Time,Status,Price,Notes\n';
+    appointments.forEach(a => {
+      csv += `"${a.clientName||''}","${a.clientPhone||''}","${a.service||''}","${a.date||''}","${a.time||''}","${a.status||''}","${a.price||0}","${a.notes||''}"\n`;
+    });
+    
+    // Encode for Google Sheets import
+    const encoded = encodeURIComponent(csv);
+    const url = `https://docs.google.com/spreadsheets/u/0/create?usp=sheets&body=${encoded}`;
+    window.open(url, '_blank');
+    
+    showToast('جاري فتح Google Sheets...', 'success');
+  } catch(e) {
+    showToast('خطأ في التصدير', 'error');
   }
 };
