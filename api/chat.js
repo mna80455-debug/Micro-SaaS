@@ -7,6 +7,24 @@ export default async function handler(req, res) {
     return res.status(500).json({ reply: 'عذراً، مفتاح الـ API غير مهيأ في الإعدادات.' });
   }
 
+  // Free offline fallback utilities
+  const offlineResponseCache = globalThis._offlineResponseCache || (globalThis._offlineResponseCache = new Map());
+  function offlineRespond(message, context = {}) {
+    const key = String((message || '')).toLowerCase().trim();
+    if (offlineResponseCache.has(key)) return offlineResponseCache.get(key);
+    let reply = 'هل ترغب في مساعدة في الحجوزات؟';
+    if (key.includes('حجز') || key.includes('موعد')) {
+      reply = 'يمكنك حجز موعد من لوحة التحكم أو من رابط الحجز الخاص بك.';
+    } else if (key.includes('إيراد') || key.includes('إيرادات')) {
+      reply = 'الإيرادات موجودة في صفحة الإحصاءات. هل تريد شرح موجز لها؟';
+    } else if (key.includes('عميل') || key.includes('عملاء')) {
+      reply = 'لديك قاعدة عملاء. يمكنك عرضها من صفحة العملاء وتحديثها عند الحجز.';
+    } else {
+      reply = 'نعم. يمكنني مساعدتك في الحجوزات والعملاء وتقديم نصائح سريعة.';
+    }
+    offlineResponseCache.set(key, reply);
+    return reply;
+  }
   try {
     const { message, context = {} } = req.body;
     
@@ -30,8 +48,8 @@ export default async function handler(req, res) {
 4. إذا سأل المستخدم عن بيانات غير موجودة في السياق، وجهه للذهاب للصفحة المناسبة في لوحة التحكم.
 `;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,14 +72,21 @@ export default async function handler(req, res) {
     
     if (data.error) {
       console.error("Gemini API Error:", data.error);
-      return res.status(500).json({ reply: `حدث خطأ في الاتصال بـ FlowAI: ${data.error.message}` });
+      // Free offline fallback
+      const offline = offlineRespond(message, context);
+      return res.status(200).json({ reply: offline });
     }
 
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "عذراً، لم أستطع معالجة طلبك الآن. حاول مرة أخرى.";
-    res.status(200).json({ reply });
-    
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (reply) {
+      res.status(200).json({ reply });
+    } else {
+      const offline = offlineRespond(message, context);
+      res.status(200).json({ reply: offline });
+    }
   } catch (err) {
     console.error("Server Error:", err);
-    res.status(500).json({ reply: 'حدث خطأ غير متوقع في السيرفر.' });
+    const offline = offlineRespond(message, context);
+    res.status(200).json({ reply: offline });
   }
 }

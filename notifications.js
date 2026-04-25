@@ -32,9 +32,35 @@ export function scheduleAppointmentReminder(appointment, minutesBefore = 60) {
   if (reminderTime > now) {
     setTimeout(() => {
       showBrowserNotification('تذكير بموعد قادم', {
-        body: `موعد ${appointment.clientName} في ${appointment.service} خلال ساعة`,
+        body: `موعد ${appointment.clientName} في ${appointment.service} خلال ${minutesBefore >= 60 ? 'ساعة' : minutesBefore + ' دقيقة'}`,
         tag: appointment.id
       });
+    }, reminderTime - now);
+  }
+}
+
+export function scheduleMultiReminder(appointment, settings) {
+  const { waReminder, browserNotify } = settings;
+  
+  // Schedule WhatsApp reminder
+  if (waReminder > 0) {
+    scheduleWhatsAppReminder(appointment, waReminder);
+  }
+  
+  // Schedule browser notification
+  if (browserNotify > 0) {
+    scheduleAppointmentReminder(appointment, browserNotify);
+  }
+}
+
+function scheduleWhatsAppReminder(appointment, minutesBefore) {
+  const aptTime = new Date(`${appointment.date}T${appointment.time}`).getTime();
+  const reminderTime = aptTime - (minutesBefore * 60 * 1000);
+  const now = Date.now();
+  
+  if (reminderTime > now) {
+    setTimeout(() => {
+      openWhatsAppNotify(appointment, 'reminder');
     }, reminderTime - now);
   }
 }
@@ -76,19 +102,38 @@ export async function sendEmailNotification(templateId, templateParams) {
 /**
  * Prepares a WhatsApp message for the provider to send to the client
  * @param {Object} appointment - The appointment data
+ * @param {string} type - Message type: 'confirm', 'reminder', 'cancel', 'custom'
  */
-export function openWhatsAppNotify(appointment) {
+export function openWhatsAppNotify(appointment, type = 'confirm') {
   const phone = appointment.clientPhone.replace(/[^0-9]/g, '');
   const fullPhone = phone.startsWith('0') ? '2' + phone : phone;
   
-  const message = encodeURIComponent(
-    `مرحباً ${appointment.clientName}! 😊\n` +
-    `بأكد مع حضرتك موعد الحجز في BookFlow:\n` +
-    `📍 الخدمة: ${appointment.service}\n` +
-    `📅 التاريخ: ${appointment.dateStr || ''}\n` +
-    `⏰ الوقت: ${appointment.time}\n` +
-    `شكراً لاختيارك لنا! ✨`
-  );
+  const messages = {
+    confirm: `مرحباً ${appointment.clientName}! 😊
+بأكد مع حض��تك موعد الحجز في BookFlow:
+📍 الخدمة: ${appointment.service}
+📅 التاريخ: ${appointment.dateStr || ''}
+⏰ الوقت: ${appointment.time}
+شكراً لاختيارك لنا! ✨`,
+    
+    reminder: `تذكير بموعدك! ⏰
+مرحباً ${appointment.clientName}!
+📍 الخدمة: ${appointment.service}
+📅 التاريخ: ${appointment.dateStr || ''}
+⏰ الوقت: ${appointment.time}
+لو محتاج تعدل الموعد، راجعني 🔄`,
+    
+    cancel: `مرحباً ${appointment.clientName}! 😔
+تم إلغاء موعدك:
+📍 الخدمة: ${appointment.service}
+📅 التاريخ: ${appointment.dateStr || ''}
+⏰ الوقت: ${appointment.time}
+لو محتاج تحجز من جديد، راجعني 🔄`,
+    
+    custom: `مرحباً ${appointment.clientName}! 👋`
+  };
+  
+  const message = encodeURIComponent(messages[type] || messages.custom);
   
   window.open(`https://wa.me/${fullPhone}?text=${message}`, '_blank');
 }

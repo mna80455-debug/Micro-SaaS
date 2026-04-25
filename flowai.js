@@ -246,6 +246,7 @@ window.askFlowAI = async function (query) {
   addMessage(query, true);
   addTypingIndicator();
 
+  // Try API first, fallback to offline
   try {
     // Gather context from dashboard
     const context = {
@@ -270,15 +271,80 @@ window.askFlowAI = async function (query) {
       addMessage(data.reply, false);
     } else {
       console.error("API Error Response:", data);
-      const errDetail = data.reply || data.error || `خطأ ${res.status}`;
-      addMessage(`عذراً: ${errDetail}`, false);
+      addMessage(getOfflineResponse(query, context), false);
     }
   } catch (err) {
     console.error('FlowAI Fetch Error:', err);
     removeTypingIndicator();
-    addMessage('في مشكلة في النت أو السيرفر، مش قادر اتصل دلوقتي.', false);
+    const context = {
+      name: window.currentUser?.displayName || 'مقدم خدمة',
+      todayAppointments: document.getElementById('statToday')?.textContent || '0',
+      pendingAppointments: document.getElementById('statPending')?.textContent || '0'
+    };
+    addMessage(getOfflineResponse(query, context), false);
   }
 };
+
+function getOfflineResponse(query, context) {
+  const q = query.toLowerCase();
+  const responses = [];
+  
+  // Date/time queries
+  if (q.includes('موعد') || q.includes('حجز') || q.includes('اليوم')) {
+    responses.push('📅 ملخص يومك:');
+    responses.push(`• مواعيد اليوم: ${context.todayAppointments || 0}`);
+    responses.push(`• بانتظار التأكيد: ${context.pendingAppointments || 0}`);
+    return responses.join('\n');
+  }
+  
+  // Client analysis
+  if (q.includes('عميل') || q.includes('عملاء')) {
+    return `👥 فيه ${context.totalClients || 0} عميل في قاعدة البيانات.\n\nلو حابب تتابع عملاءكInactive، ممكن تفلترهم من صفحة العملاء.`;
+  }
+  
+  // Revenue/money
+  if (q.includes('دخل') || q.includes(' revenue') || q.includes('ايراد')) {
+    return '💰 للإيراد تفاصيل، اذهب صفحة الإحصائيات من القائمة الجانبية - فيها تفاصيل كاملة.';
+  }
+  
+  // Tips
+  if (q.includes('نصيحة') || q.includes('tip') || q.includes('ازاي')) {
+    return [
+      '🧠 نصائح ذكية:',
+      '',
+      '1️⃣ فعّل التذكيرات التلقائية - بتقلل نسبة عدم الحضور',
+      '2️⃣ شارك رابط الحجز - سهل على العملاء',
+      '3️⃣ تابع إحصائياتك أسبوعياً',
+      '4️⃣ أضف ملاحظات لكل عميل - التخصيص يبني ولاء'
+    ].join('\n');
+  }
+  
+  // Help
+  if (q.includes('help') || q.includes('مساعدة') || q.includes('ازاي')) {
+    return [
+      '🤖 تقدر تسألني عن:',
+      '',
+      '• ملخصoday - إحصائيات اليوم',
+      '• نصيحة - نصائح ذكية',
+      '• عميل - حالة العملاء',
+      '• إيراد - الإيرادات',
+      '',
+      'أو اذهب للوحة التحكم!'
+    ].join('\n');
+  }
+  
+  // Default
+  return [
+    '🤔 سؤال ممتاز!',
+    '',
+    '🧠 موجود assistingك:',
+    `• "${context.name || 'حسابك'}" - معلومة سريعة`,
+    '• نصيحة - نصائح ذكية',
+    '• ملخصday - إحصائيات Today',
+    '',
+    'جرب تسألني بطريقة مختلفة!'
+  ].join('\n');
+}
 
 window.sendFlowAI = function () {
   const input = document.getElementById('flowAiInput');

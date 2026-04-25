@@ -890,6 +890,27 @@
   font-size: 0.85rem;
 }
 
+.client-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.tag-chip {
+  background: var(--teal-dim);
+  color: var(--teal);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.client-filters {
+  display: flex;
+  align-items: center;
+}
+
 /* Loyalty Badges */
 .badge-vip, .badge-gold, .badge-silver {
   display: inline-block;

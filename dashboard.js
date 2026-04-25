@@ -47,65 +47,19 @@ document.addEventListener('DOMContentLoaded', () => {
   window.dbg('DOM loaded');
   initAuth();
   initI18n();
-  setupThemeToggle();
-  setupLangToggle();
   setupRouting();
   
   import('./notifications.js').then(({ requestNotificationPermission }) => {
     requestNotificationPermission();
   }).catch(e => console.warn('Notification error:', e));
 });
+
+// Removed: legacy direct theme toggle binding (handled by i18n/theme-manager)
 
 // Theme toggle - settings button only
-function setupThemeToggle() {
-  const btnToggleTheme = document.getElementById('btnToggleTheme');
-  const currentTheme = localStorage.getItem('bookflow_theme');
-  const isDark = currentTheme === 'dark';
-  
-  function toggleTheme() {
-    const isDarkNow = document.documentElement.classList.toggle('dark-theme');
-    localStorage.setItem('bookflow_theme', isDarkNow ? 'dark' : 'light');
-    
-    if (btnToggleTheme) {
-      btnToggleTheme.innerHTML = isDarkNow ? '<i class="ph-bold ph-sun"></i> الوضع الفاتح' : '<i class="ph-bold ph-moon"></i> الوضع الداكن';
-    }
-  }
-  
-  btnToggleTheme?.addEventListener('click', toggleTheme);
-  
-  if (isDark) {
-    document.documentElement.classList.add('dark-theme');
-    if (btnToggleTheme) btnToggleTheme.innerHTML = '<i class="ph-bold ph-sun"></i> الوضع الفاتح';
-  }
-}
+// Theme toggle is managed by i18n.js (translations) to avoid duplicate listeners
 
-// Language toggle - translate entire site
-function setupLangToggle() {
-  const langBtn = document.getElementById('btnToggleLang');
-  
-  function toggleLang() {
-    const currentLang = localStorage.getItem('bookflow_lang') || 'ar';
-    const newLang = currentLang === 'ar' ? 'en' : 'ar';
-    localStorage.setItem('bookflow_lang', newLang);
-    window.location.reload();
-  }
-  
-  langBtn?.addEventListener('click', toggleLang);
-}
-
-// Initialize routing and theming
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('[BookFlow] Dashboard loading...');
-  setupThemeToggle();
-  setupLangToggle();
-  initI18n();
-  setupRouting();
-  
-  // Request notification permission
-  import('./notifications.js').then(({ requestNotificationPermission }) => {
-    requestNotificationPermission();
-  }).catch(e => console.warn('Notification error:', e));
-});
+// Language toggle is handled by i18n.js
 
 // Setup Routing Logic with Event Delegation
 function setupRouting() {
@@ -241,11 +195,33 @@ async function loadDashboardStats(userId) {
     
     animateValue('statPending', 0, pendingCount, 800);
     animateValue('statRevenue', 0, monthlyRev, 800);
+    
+    // Calculate unique clients from appointments + clients collection
+    let clientCount = 0;
+    const clientPhones = new Set(snap.docs.map(d => d.data().clientPhone).filter(p => p));
+    
+    // Also get from clients collection
+    try {
+      const clientsQ = query(collection(db, 'clients'), where('userId', '==', userId));
+      const clientsSnap = await getDocs(clientsQ);
+      clientCount = clientsSnap.size;
+      clientsSnap.forEach(d => {
+        const phone = d.data().phone;
+        if(phone) clientPhones.add(phone);
+      });
+      console.log('Clients from DB:', clientCount, 'phones:', Array.from(clientPhones));
+    } catch(e) {
+      console.error('Error loading clients for stats:', e);
+    }
+    
+    const totalClients = Math.max(clientCount, clientPhones.size);
+    animateValue('statClients', 0, totalClients, 800);
 
   } catch (err) {
     console.error("Stats error", err);
     document.getElementById('statToday').textContent = '0';
     document.getElementById('statPending').textContent = '0';
+    document.getElementById('statClients').textContent = '0';
   }
 }
 
@@ -353,24 +329,72 @@ async function loadAIRecommendations() {
     
     const now = new Date();
     const weekAgo = now.getTime() - 7*24*60*60*1000;
+    const monthAgo = now.getTime() - 30*24*60*60*1000;
     const recentApts = allApts.filter(a => a.date >= weekAgo);
+    const monthlyApts = allApts.filter(a => a.date >= monthAgo);
     
     // Calculate insights
     const completed = recentApts.filter(a => a.status === 'completed').length;
     const cancelled = recentApts.filter(a => a.status === 'cancelled').length;
     const pending = recentApts.filter(a => a.status === 'pending').length;
+    const noShow = recentApts.filter(a => a.status === 'no-show').length;
     
     const revenue = completed.reduce((sum, a) => sum + (a.price || 0), 0);
     const clients = new Set(recentApts.map(a => a.clientPhone)).size;
+    
+    // Monthly comparison
+    const lastMonthApts = allApts.filter(a => {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
+      const monthEnd = new Date(now.getFullYear(), now.getMonth(), 0).getTime();
+      return a.date >= monthStart && a.date <= monthEnd;
+    });
+    const lastMonthRevenue = lastMonthApts.filter(a => a.status === 'completed').reduce((sum, a) => sum + (a.price || 0), 0);
+    const growth = lastMonthRevenue > 0 ? Math.round((revenue - lastMonthRevenue) / lastMonthRevenue * 100) : 0;
+    
+    // Peak times analysis
+    const timeSlots = {};
+    monthlyApts.filter(a => a.status === 'completed').forEach(a => {
+      const hour = a.time?.split(':')[0];
+      if (hour) timeSlots[hour] = (timeSlots[hour] || 0) + 1;
+    });
+    const peakHour = Object.entries(timeSlots).sort((a, b) => b[1] - a[1])[0];
+    
+    // At-risk client analysis
+    const clientHistory = {};
+    allApts.forEach(a => {
+      if (!a.clientPhone) return;
+      if (!clientHistory[a.clientPhone]) {
+        clientHistory[a.clientPhone] = { name: a.clientName, noShow: 0, total: 0, lastVisit: 0 };
+      }
+      clientHistory[a.clientPhone].total++;
+      if (a.status === 'cancelled' || a.status === 'no-show') {
+        clientHistory[a.clientPhone].noShow++;
+      }
+      if (a.date > clientHistory[a.clientPhone].lastVisit) {
+        clientHistory[a.clientPhone].lastVisit = a.date;
+      }
+    });
+    
+    const atRisk = Object.entries(clientHistory)
+      .filter(([_, c]) => c.total >= 3 && (c.noShow / c.total) > 0.3)
+      .slice(0, 2);
+    
+    const churnedClients = Object.entries(clientHistory)
+      .filter(([_, c]) => c.total >= 2 && (now.getTime() - c.lastVisit) > 45*24*60*60*1000)
+      .slice(0, 2);
     
     const html = `
       <div class="recommendation-card">
         <h4>🧠 توصيات FlowAI</h4>
         <div class="rec-items">
-          ${cancelled > completed * 0.3 ? '<div class="rec-item warning">⚠️ نسبة الإلغاء عالية - فكر في تفعيل التذكيرات</div>' : ''}
-          ${pending > 5 ? '<div class="rec-item">⏰ عندك ' + pending + ' مواعيد.pending - تأكد منها</div>' : ''}
+          ${cancelled + noShow > completed * 0.25 ? '<div class="rec-item warning">⚠️ نسبة الإلغاء/عدم الحضور عالية - فكر في تفعيل التذكيرات</div>' : ''}
+          ${pending > 3 ? '<div class="rec-item">⏰ عندك ' + pending + ' مواعيد.pending - تأكد منها</div>' : ''}
+          ${growth !== 0 ? '<div class="rec-item">' + (growth > 0 ? '📈' : '📉') + ' إيرادات الأسبوع: ' + (growth > 0 ? '+' : '') + growth + '% من الشهر الماضي</div>' : ''}
           ${revenue > 0 ? '<div class="rec-item">💰 إيرادات الأسبوع: ' + revenue + ' ج.م</div>' : ''}
-          ${clients > 0 ? '<div class="rec-item">👥 عملاء جدد: ' + clients + '</div>' : ''}
+          ${clients > 0 ? '<div class="rec-item">👥 عملاء هذا الأسبوع: ' + clients + '</div>' : ''}
+          ${peakHour ? '<div class="rec-item">🌙 أفضل وقت لك: ' + peakHour[0] + ':00 - ' + (parseInt(peakHour[0])+1) + ':00</div>' : ''}
+          ${atRisk.length > 0 ? '<div class="rec-item warning">👎 عملاء نسبة عدم الحضور عالية: ' + atRisk.map(([_, c]) => c.name).join(', ') + '</div>' : ''}
+          ${churnedClients.length > 0 ? '<div class="rec-item">🔔 عملاء لم يحجزوا منذ 45+ يوم: ' + churnedClients.map(([_, c]) => c.name).join(', ') + '</div>' : ''}
         </div>
       </div>
     `;
@@ -411,12 +435,19 @@ async function loadClients() {
 
     const clients = snap.docs.map(d => ({id: d.id, ...d.data()}));
     
-    // Add loyalty badges
+    window.allClients = clients;
+    updateClientFilters(clients);
+    
     const getBadge = (visits) => {
       if (visits >= 20) return '<span class="badge-vip">💎 VIP</span>';
       if (visits >= 10) return '<span class="badge-gold">🥇 ذهبي</span>';
       if (visits >= 5) return '<span class="badge-silver">🥈 فضي</span>';
       return '';
+    };
+    
+    const getCategoryBadge = (cat) => {
+      const badges = { 'vip': '⭐ VIP', 'regular': '👤 منتظم', 'new': '🆕 جديد', 'inactive': '⚠️ غير نشط' };
+      return cat ? badges[cat] || '' : '';
     };
     
     container.innerHTML = clients.map((client, index) => `
@@ -426,6 +457,8 @@ async function loadClients() {
           <span class="client-name">${client.name}</span>
           <span class="client-phone">${client.phone || '—'}</span>
           ${getBadge(client.totalVisits || 0)}
+          ${getCategoryBadge(client.category)}
+          ${(client.tags || []).length ? `<div class="client-tags">${client.tags.slice(0,3).map(t => `<span class="tag-chip">${t}</span>`).join('')}</div>` : ''}
         </div>
         <div class="client-stats">
           <span class="client-visits">${client.totalVisits || 1} زيارة</span>
@@ -441,9 +474,87 @@ async function loadClients() {
   }
 }
 
+function updateClientFilters(clients) {
+  const tagSelect = document.getElementById('clientsTagFilter');
+  const allTags = new Set();
+  clients.forEach(c => (c.tags || []).forEach(t => allTags.add(t)));
+  tagSelect.innerHTML = '<option value="">كل الوسوم</option>' + 
+    Array.from(allTags).sort().map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+window.searchClients = function(query) {
+  if(!window.allClients) return;
+  const q = query.toLowerCase();
+  const filtered = window.allClients.filter(c => 
+    c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
+  );
+  renderClients(filtered);
+};
+
+window.filterClients = function() {
+  if(!window.allClients) return;
+  const catFilter = document.getElementById('clientsCategoryFilter').value;
+  const tagFilter = document.getElementById('clientsTagFilter').value;
+  const searchQuery = document.getElementById('clientsSearchInput').value;
+  
+  let filtered = window.allClients;
+  
+  if(catFilter) filtered = filtered.filter(c => c.category === catFilter);
+  if(tagFilter) filtered = filtered.filter(c => (c.tags || []).includes(tagFilter));
+  if(searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(c => c.name.toLowerCase().includes(q) || (c.phone || '').includes(q));
+  }
+  
+  renderClients(filtered);
+};
+
+function renderClients(clients) {
+  const container = document.getElementById('clientsList');
+  const getBadge = (visits) => {
+    if (visits >= 20) return '<span class="badge-vip">💎 VIP</span>';
+    if (visits >= 10) return '<span class="badge-gold">🥇 ذهبي</span>';
+    if (visits >= 5) return '<span class="badge-silver">🥈 فضي</span>';
+    return '';
+  };
+  const getCategoryBadge = (cat) => {
+    const badges = { 'vip': '⭐ VIP', 'regular': '👤 منتظم', 'new': '🆕 جديد', 'inactive': '⚠️ غير نشط' };
+    return cat ? badges[cat] || '' : '';
+  };
+  
+  if(!clients.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><h3 class="empty-title">مفيش نتائج</h3></div>`;
+    return;
+  }
+  
+  container.innerHTML = clients.map((client, index) => `
+    <div class="client-card fade-up stagger-${(index % 10) + 1}" onclick="window.openEditClientModal('${client.id}')">
+      <div class="client-avatar">${client.name.charAt(0).toUpperCase()}</div>
+      <div class="client-info">
+        <span class="client-name">${client.name}</span>
+        <span class="client-phone">${client.phone || '—'}</span>
+        ${getBadge(client.totalVisits || 0)}
+        ${getCategoryBadge(client.category)}
+        ${(client.tags || []).length ? `<div class="client-tags">${client.tags.slice(0,3).map(t => `<span class="tag-chip">${t}</span>`).join('')}</div>` : ''}
+      </div>
+      <div class="client-stats">
+        <span class="client-visits">${client.totalVisits || 1} زيارة</span>
+      </div>
+      <div class="client-actions" style="display: flex; gap: 8px; align-items: center;">
+        ${client.phone ? `<button class="btn-whatsapp-quick" onclick="event.stopPropagation(); window.openWhatsApp('${client.phone}', '${client.name}')"><i class="ph-fill ph-whatsapp-logo"></i> واتساب</button>` : ''}
+        <button class="btn-quick-book" onclick="event.stopPropagation(); window.openNewAppointmentModal()">+ حجز</button>
+      </div>
+    </div>
+  `).join('');
+}
+
 window.saveNewClientForm = async function() {
   const name = document.getElementById('newClientNameInput');
   const phone = document.getElementById('newClientPhoneInput');
+  const email = document.getElementById('newClientEmailInput');
+  const category = document.getElementById('newClientCategory');
+  const tags = document.getElementById('newClientTags');
+  const notes = document.getElementById('newClientNotes');
   
   name.style.borderColor = 'var(--border)';
   if(!name.value.trim()) {
@@ -460,12 +571,20 @@ window.saveNewClientForm = async function() {
       userId: window.currentUser.uid,
       name: name.value.trim(),
       phone: phone.value.trim() || '',
+      email: email.value.trim() || '',
+      category: category.value || 'new',
+      tags: tags.value.trim() ? tags.value.trim().split(',').map(t => t.trim()).filter(Boolean) : [],
+      notes: notes.value.trim() || '',
       totalVisits: 0,
       createdAt: new Date().getTime()
     });
     showToast('تم اضافة العميل بنجاح', 'success');
     name.value = '';
     phone.value = '';
+    email.value = '';
+    category.value = '';
+    tags.value = '';
+    notes.value = '';
     window.closeModal('newClientModal');
     loadClients();
   } catch(e) {
@@ -550,19 +669,53 @@ btnSaveAppointment?.addEventListener('click', async () => {
       appointment_time: timeVal
     }).catch(e => console.warn("Provider email error", e));
 
-    // Save/Update Client quick path (simplified for demo)
-    await addDoc(collection(db, 'clients'), {
-       userId: window.currentUser.uid,
-       name: clientName,
-       phone,
-       totalVisits: 1,
-       createdAt: new Date().getTime()
-    });
+    // Check if client exists and update or create new
+    if(phone) {
+      const existingClients = await getDocs(query(
+        collection(db, 'clients'),
+        where('userId', '==', window.currentUser.uid),
+        where('phone', '==', phone)
+      ));
+      
+      if(!existingClients.empty) {
+        const existingId = existingClients.docs[0].id;
+        const existingData = existingClients.docs[0].data();
+        await updateDoc(doc(db, 'clients', existingId), {
+          totalVisits: (existingData.totalVisits || 0) + 1,
+          lastVisit: new Date().getTime()
+        });
+      } else {
+        await addDoc(collection(db, 'clients'), {
+          userId: window.currentUser.uid,
+          name: clientName,
+          phone,
+          category: 'new',
+          totalVisits: 1,
+          createdAt: new Date().getTime()
+        });
+      }
+    } else {
+      // No phone - just add as new
+      await addDoc(collection(db, 'clients'), {
+        userId: window.currentUser.uid,
+        name: clientName,
+        phone: '',
+        category: 'new',
+        totalVisits: 1,
+        createdAt: new Date().getTime()
+      });
+    }
 
     showToast('تم حفظ الموعد ✅', 'success');
     
-    // Schedule browser reminder (1 hour before)
-    scheduleAppointmentReminder(aptData, 60);
+    // Schedule reminders based on user settings
+    if(window.currentUserSettings?.notifications) {
+      const { scheduleMultiReminder } = await import('./notifications.js');
+      scheduleMultiReminder(aptData, window.currentUserSettings.notifications);
+    } else {
+      // Default: browser notification 1 hour before
+      scheduleAppointmentReminder(aptData, 60);
+    }
     
     window.closeModal('newAppointmentModal');
     
@@ -604,6 +757,48 @@ btnSaveSettings?.addEventListener('click', async () => {
     showToast('خطأ في الحفظ', 'error');
   } finally {
     btnSaveSettings.classList.remove('btn-loading');
+  }
+});
+
+// Save Notification Settings
+document.getElementById('btnSaveNotifications')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btnSaveNotifications');
+  btn.classList.add('btn-loading');
+  
+  try {
+    const waReminder = document.getElementById('settingWAReminder').value;
+    const browserNotify = document.getElementById('settingBrowserNotify').value;
+    const emailConfirm = document.getElementById('settingEmailConfirm').checked;
+    const vodafoneCash = document.getElementById('settingVodafoneCash').value;
+    const enableVodafone = document.getElementById('enableVodafoneCash').checked;
+    const stripeKey = document.getElementById('settingStripeKey').value;
+    const enableStripe = document.getElementById('enableStripe').checked;
+    
+    await updateDoc(doc(db, 'users', window.currentUser.uid), {
+      'settings.notifications': {
+        waReminder: parseInt(waReminder),
+        browserNotify: parseInt(browserNotify),
+        emailConfirm
+      },
+      'settings.payment': {
+        vodafoneCash: vodafoneCash,
+        enableVodafoneCash: enableVodafone,
+        stripeKey,
+        enableStripe
+      }
+    });
+    
+    // Request browser notification permission if enabled
+    if(parseInt(browserNotify) > 0) {
+      const { requestNotificationPermission } = await import('./notifications.js');
+      await requestNotificationPermission();
+    }
+    
+    showToast('تم حفظ إعدادات الإشعارات', 'success');
+  } catch(err) {
+    showToast('خطأ في الحفظ', 'error');
+  } finally {
+    btn.classList.remove('btn-loading');
   }
 });
 
@@ -889,6 +1084,8 @@ window.openEditClientModal = async function(clientId) {
     document.getElementById('editClientName').value = c.name;
     document.getElementById('editClientPhone').value = c.phone || '';
     document.getElementById('editClientEmail').value = c.email || '';
+    document.getElementById('editClientCategory').value = c.category || '';
+    document.getElementById('editClientTags').value = (c.tags || []).join(', ');
     document.getElementById('editClientNotes').value = c.notes || '';
     window.openModal('editClientModal');
   } catch(e) {
@@ -901,6 +1098,8 @@ window.updateClient = async function() {
   const name = document.getElementById('editClientName').value.trim();
   const phone = document.getElementById('editClientPhone').value.trim();
   const email = document.getElementById('editClientEmail').value.trim();
+  const category = document.getElementById('editClientCategory').value;
+  const tags = document.getElementById('editClientTags').value.trim();
   const notes = document.getElementById('editClientNotes').value.trim();
 
   if(!name) {
@@ -909,7 +1108,12 @@ window.updateClient = async function() {
   }
 
   try {
-    await updateDoc(doc(db, 'clients', id), { name, phone, email, notes });
+    await updateDoc(doc(db, 'clients', id), { 
+      name, phone, email, 
+      category: category || 'new',
+      tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      notes 
+    });
     showToast('تم تحديث بيانات العميل', 'success');
     window.closeModal('editClientModal');
     loadClients();
@@ -1171,6 +1375,23 @@ window.initDashboard = async function(user) {
         if(s.website) document.getElementById('settingWebsite').value = s.website;
         if(s.waMessage) document.getElementById('settingWaMessage').value = s.waMessage;
       }
+      // Load notification settings
+      if(userData.settings?.notifications) {
+        const n = userData.settings.notifications;
+        if(n.waReminder) document.getElementById('settingWAReminder').value = n.waReminder;
+        if(n.browserNotify) document.getElementById('settingBrowserNotify').value = n.browserNotify;
+        if(n.emailConfirm !== undefined) document.getElementById('settingEmailConfirm').checked = n.emailConfirm;
+        window.currentUserSettings = window.currentUserSettings || {};
+        window.currentUserSettings.notifications = n;
+      }
+      // Load payment settings
+      if(userData.settings?.payment) {
+        const p = userData.settings.payment;
+        if(p.vodafoneCash) document.getElementById('settingVodafoneCash').value = p.vodafoneCash;
+        if(p.enableVodafoneCash !== undefined) document.getElementById('enableVodafoneCash').checked = p.enableVodafoneCash;
+        if(p.stripeKey) document.getElementById('settingStripeKey').value = p.stripeKey;
+        if(p.enableStripe !== undefined) document.getElementById('enableStripe').checked = p.enableStripe;
+      }
     }
 
     const todayOpts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -1393,5 +1614,71 @@ window.exportToGoogleSheets = async function() {
     showToast('جاري فتح Google Sheets...', 'success');
   } catch(e) {
     showToast('خطأ في التصدير', 'error');
+  }
+};
+
+window.openImportClientsModal = function() {
+  window.openModal('importClientsModal');
+};
+
+window.importClientsFromExcel = async function() {
+  const fileInput = document.getElementById('importClientsFile');
+  const file = fileInput.files[0];
+  if(!file) {
+    showToast('يرجى اختيار ملف', 'error');
+    return;
+  }
+  
+  try {
+    const text = await file.text();
+    const lines = text.split('\n').filter(l => l.trim());
+    if(lines.length < 2) {
+      showToast('الملف فارغ أو غير صالح', 'error');
+      return;
+    }
+    
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    const nameIdx = headers.findIndex(h => h.includes('الاسم') || h.toLowerCase().includes('name'));
+    const phoneIdx = headers.findIndex(h => h.includes('الموبايل') || h.toLowerCase().includes('phone') || h.toLowerCase().includes('mobile'));
+    const emailIdx = headers.findIndex(h => h.includes('الإيميل') || h.toLowerCase().includes('email'));
+    const categoryIdx = headers.findIndex(h => h.includes('التصنيف') || h.toLowerCase().includes('category'));
+    const tagsIdx = headers.findIndex(h => h.includes('الوسوم') || h.toLowerCase().includes('tag'));
+    const notesIdx = headers.findIndex(h => h.includes('الملاحظات') || h.toLowerCase().includes('note'));
+    
+    if(nameIdx === -1) {
+      showToast('عمود "الاسم" غير موجود', 'error');
+      return;
+    }
+    
+    let imported = 0;
+    for(let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
+      const name = cols[nameIdx];
+      if(!name) continue;
+      
+      const phone = phoneIdx > -1 ? cols[phoneIdx] : '';
+      const email = emailIdx > -1 ? cols[emailIdx] : '';
+      const category = categoryIdx > -1 ? cols[categoryIdx].toLowerCase() : 'new';
+      const tags = tagsIdx > -1 && cols[tagsIdx] ? cols[tagsIdx].split(';').map(t => t.trim()).filter(Boolean) : [];
+      const notes = notesIdx > -1 ? cols[notesIdx] : '';
+      
+      await addDoc(collection(db, 'clients'), {
+        userId: window.currentUser.uid,
+        name, phone, email,
+        category: ['vip','regular','new','inactive'].includes(category) ? category : 'new',
+        tags, notes,
+        totalVisits: 0,
+        createdAt: new Date().getTime()
+      });
+      imported++;
+    }
+    
+    showToast(`تم استيراد ${imported} عميل`, 'success');
+    window.closeModal('importClientsModal');
+    fileInput.value = '';
+    loadClients();
+  } catch(e) {
+    console.error(e);
+    showToast('خطأ في الاستيراد', 'error');
   }
 };

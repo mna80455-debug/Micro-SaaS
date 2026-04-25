@@ -55,15 +55,14 @@ let currentLang = localStorage.getItem('bookflow_lang') || 'ar';
 let isDarkMode = localStorage.getItem('bookflow_theme') === 'dark';
 
 function applyTheme() {
-  if (isDarkMode) {
-    document.documentElement.classList.add('dark-theme');
-  } else {
-    document.documentElement.classList.remove('dark-theme');
-  }
+  // Derive theme from localStorage to avoid mismatch when in-memory state is out of sync
+  const shouldDark = localStorage.getItem('bookflow_theme') === 'dark';
+  document.documentElement.classList.toggle('dark-theme', shouldDark);
+  isDarkMode = shouldDark;
   // Update toggle button text if exists
   const themeBtn = document.getElementById('btnToggleTheme');
   if (themeBtn) {
-    themeBtn.innerHTML = isDarkMode ? `<i class="ph-bold ph-sun"></i> ${t('light_mode')}` : `<i class="ph-bold ph-moon"></i> ${t('dark_mode')}`;
+    themeBtn.innerHTML = shouldDark ? `<i class="ph-bold ph-sun"></i> ${t('light_mode')}` : `<i class="ph-bold ph-moon"></i> ${t('dark_mode')}`;
   }
 }
 
@@ -100,17 +99,26 @@ export function initI18n() {
   applyTheme();
   translateUI();
 
-  document.getElementById('btnToggleTheme')?.addEventListener('click', () => {
-    isDarkMode = !isDarkMode;
-    localStorage.setItem('bookflow_theme', isDarkMode ? 'dark' : 'light');
-    applyTheme();
+  // Use event delegation to support dynamic content across views
+  document.addEventListener('click', (e) => {
+    const themeBtn = e.target.closest('#btnToggleTheme');
+    if (themeBtn) {
+      isDarkMode = !isDarkMode;
+      localStorage.setItem('bookflow_theme', isDarkMode ? 'dark' : 'light');
+      applyTheme();
+      return;
+    }
+
+    const langBtn = e.target.closest('#btnToggleLang');
+    if (langBtn) {
+      currentLang = currentLang === 'ar' ? 'en' : 'ar';
+      localStorage.setItem('bookflow_lang', currentLang);
+      translateUI();
+    }
   });
 
-  document.getElementById('btnToggleLang')?.addEventListener('click', () => {
-    currentLang = currentLang === 'ar' ? 'en' : 'ar';
-    localStorage.setItem('bookflow_lang', currentLang);
-    translateUI();
-  });
+  // Initialize theme manager (late binding)
+  import('./theme-manager.js').then(({ initTheme }) => { if (typeof initTheme === 'function') initTheme(); }).catch(() => {});
 }
 
 // Expose minimal API
