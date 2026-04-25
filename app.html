@@ -857,7 +857,38 @@
   <script type="module" src="/i18n.js?v=4"></script>
   <script type="module" src="/auth.js?v=4"></script>
   <script type="module" src="/calendar.js?v=4"></script>
-  <script type="module" src="/dashboard.js?v=16"></script>
+  <script>
+    // Make functions available immediately
+    window.openNewAppointmentModal = function() {
+      console.log('[BookFlow] Opening appointment modal...');
+      const modal = document.getElementById('newAppointmentModal');
+      if (modal) {
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        console.log('[BookFlow] Modal opened successfully');
+      } else {
+        console.log('[BookFlow] Modal not found!');
+      }
+    };
+    
+    window.closeModal = function(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.remove('open');
+      document.body.style.overflow = '';
+    };
+    
+    window.openModal = function(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.add('open');
+    };
+    
+    window.showToast = function(msg, type) {
+      alert(type === 'error' ? '❌ ' + msg : '✅ ' + msg);
+    };
+    
+    console.log('[BookFlow] Core functions registered');
+    </script>
+    <script type="module" src="/dashboard.js?v=17"></script>
   <script src="/flowai.js?v=4"></script>
   <script>
     if ('serviceWorker' in navigator) {
