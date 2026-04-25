@@ -15,6 +15,7 @@ const auth = getAuth();
 // Global fallback functions (available immediately even before modules load)
 window.openNewAppointmentModal = function() {
   console.log('[BookFlow] openNewAppointmentModal called');
+  alert('فتح نافذة الحجز');
   const modal = document.getElementById('newAppointmentModal');
   if (modal) {
     modal.classList.add('open');
@@ -23,17 +24,23 @@ window.openNewAppointmentModal = function() {
 };
 
 window.openModal = function(modalId) {
+  console.log('[BookFlow] openModal:', modalId);
   const modal = document.getElementById(modalId);
   if (modal) modal.classList.add('open');
 };
 
 window.closeModal = function(modalId) {
+  console.log('[BookFlow] closeModal:', modalId);
   const modal = document.getElementById(modalId);
   if (modal) modal.classList.remove('open');
   document.body.style.overflow = '';
 };
 
-// Debug helper
+window.dbg = function(msg, data) {
+  console.log('[BookFlow]', msg, data);
+};
+
+window.dbg('Script loaded, waiting for DOM...');
 window.dbg = function(msg, data) {
   console.log('[BookFlow]', msg, data);
 };
