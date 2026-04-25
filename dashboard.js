@@ -12,6 +12,27 @@ import { openWhatsAppNotify, scheduleAppointmentReminder, sendEmailNotification 
 
 const auth = getAuth();
 
+// Global fallback functions (available immediately even before modules load)
+window.openNewAppointmentModal = function() {
+  console.log('[BookFlow] openNewAppointmentModal called');
+  const modal = document.getElementById('newAppointmentModal');
+  if (modal) {
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+window.openModal = function(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.add('open');
+};
+
+window.closeModal = function(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.remove('open');
+  document.body.style.overflow = '';
+};
+
 // Debug helper
 window.dbg = function(msg, data) {
   console.log('[BookFlow]', msg, data);
