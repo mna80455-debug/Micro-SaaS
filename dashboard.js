@@ -12,40 +12,14 @@ import { openWhatsAppNotify, scheduleAppointmentReminder, sendEmailNotification 
 
 const auth = getAuth();
 
-// Global fallback functions (available immediately even before modules load)
-window.openNewAppointmentModal = function() {
-  console.log('[BookFlow] openNewAppointmentModal called');
-  alert('فتح نافذة الحجز');
-  const modal = document.getElementById('newAppointmentModal');
-  if (modal) {
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-};
-
-window.openModal = function(modalId) {
-  console.log('[BookFlow] openModal:', modalId);
-  const modal = document.getElementById(modalId);
-  if (modal) modal.classList.add('open');
-};
-
-window.closeModal = function(modalId) {
-  console.log('[BookFlow] closeModal:', modalId);
-  const modal = document.getElementById(modalId);
-  if (modal) modal.classList.remove('open');
-  document.body.style.overflow = '';
-};
-
-window.dbg = function(msg, data) {
-  console.log('[BookFlow]', msg, data);
-};
-
-window.dbg('Script loaded, waiting for DOM...');
+// Debug helper
 window.dbg = function(msg, data) {
   console.log('[BookFlow]', msg, data);
 };
 
 window.dbg('Starting...');
+
+// Global fallback functions (available immediately even before modules load)
 
 function initAuth() {
   onAuthStateChanged(auth, (user) => {
@@ -1094,11 +1068,6 @@ const legendEl = document.getElementById('statusLegend');
     } catch(e) {
       console.error('Stats error:', e);
     }
-  }
-}
-
-  } catch(e) {
-    console.error(e);
   }
 }
 
