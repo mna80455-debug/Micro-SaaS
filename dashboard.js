@@ -5,14 +5,29 @@ import {
   updateDoc, doc, getDoc, orderBy, increment,
   deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { showToast } from './components/toast.js';
 import { initI18n } from './i18n.js';
 import { openWhatsAppNotify, scheduleAppointmentReminder, sendEmailNotification } from './notifications.js';
 
+const auth = getAuth();
+
 // Debug helper
 window.dbg = function(msg, data) {
-  console.log('[BookFlow Debug]', msg, data);
+  console.log('[BookFlow]', msg, data);
 };
+
+window.dbg('Starting...');
+
+function initAuth() {
+  onAuthStateChanged(auth, (user) => {
+    window.dbg('Auth state:', user ? 'logged in' : 'not logged in');
+    if (user) {
+      window.currentUser = user;
+      initDashboard(user);
+    }
+  });
+}
 
 // gcal loaded lazily to avoid breaking the module if gapi/google aren't ready
 let _gcal = null;
@@ -27,20 +42,17 @@ const connectGcal = async () => { const m = await getGcal(); return m.connectGca
 const addEventToGcal = async (d) => { const m = await getGcal(); return m.addEventToGcal?.(d); };
 
 document.addEventListener('DOMContentLoaded', () => {
-  window.dbg('Dashboard loading...');
+  window.dbg('DOM loaded');
+  initAuth();
   initI18n();
   setupThemeToggle();
   setupLangToggle();
+  setupRouting();
   
-  // Request notification permission
   import('./notifications.js').then(({ requestNotificationPermission }) => {
     requestNotificationPermission();
   }).catch(e => console.warn('Notification error:', e));
 });
-
-// Wait for auth
-let authReady = false;
-window.addEventListener('authReady', () => { authReady = true; });
 
 // Theme toggle - settings button only
 function setupThemeToggle() {
@@ -129,7 +141,9 @@ function setupRouting() {
 
 // Dashboard initialization is handled at the end of the file.
 
+// Dashboard initialization
 window.openNewAppointmentModal = function() {
+  console.log('[BookFlow] openNewAppointmentModal called');
   const modal = document.getElementById('newAppointmentModal');
   if (modal) {
     modal.classList.add('open');
@@ -1187,17 +1201,6 @@ window.initDashboard = async function(user) {
 
 // Global exposure
 window.initDashboard = initDashboard;
-
-// Self-initialize if user is already logged in (Fix for race condition)
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-const auth = getAuth();
-onAuthStateChanged(auth, (user) => {
-  if (user && !window.dashboardInited) {
-    window.dashboardInited = true;
-    window.currentUser = user;
-    initDashboard(user);
-  }
-});
 
 window.handleConnectGcal = async function() {
   try {
