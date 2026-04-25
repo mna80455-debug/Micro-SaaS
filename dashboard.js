@@ -22,9 +22,8 @@ const addEventToGcal = async (d) => { const m = await getGcal(); return m.addEve
 
 document.addEventListener('DOMContentLoaded', initI18n);
 
-// Theme toggle - both sidebar and settings button
+// Theme toggle - settings button only
 function setupThemeToggle() {
-  const themeToggle = document.getElementById('themeToggle');
   const btnToggleTheme = document.getElementById('btnToggleTheme');
   const currentTheme = localStorage.getItem('bookflow_theme');
   const isDark = currentTheme === 'dark';
@@ -33,26 +32,17 @@ function setupThemeToggle() {
     const isDarkNow = document.documentElement.classList.toggle('dark-theme');
     localStorage.setItem('bookflow_theme', isDarkNow ? 'dark' : 'light');
     
-    // Update sidebar icon
-    const sidebarIcon = themeToggle?.querySelector('i');
-    if (sidebarIcon) {
-      sidebarIcon.className = isDarkNow ? 'ph-bold ph-sun' : 'ph-bold ph-moon';
-      themeToggle.querySelector('.nav-label').textContent = isDarkNow ? 'الوضع الفاتح' : 'الوضع الداكن';
-    }
-    
     // Update settings button icon
     if (btnToggleTheme) {
       btnToggleTheme.innerHTML = isDarkNow ? '<i class="ph-bold ph-sun"></i> الوضع الفاتح' : '<i class="ph-bold ph-moon"></i> الوضع الداكن';
     }
   }
   
-  themeToggle?.addEventListener('click', toggleTheme);
   btnToggleTheme?.addEventListener('click', toggleTheme);
   
   // Apply saved theme on load
   if (isDark) {
     document.documentElement.classList.add('dark-theme');
-    if (themeToggle) themeToggle.querySelector('.nav-label').textContent = 'الوضع الفاتح';
     if (btnToggleTheme) btnToggleTheme.innerHTML = '<i class="ph-bold ph-sun"></i> الوضع الفاتح';
   }
 }
