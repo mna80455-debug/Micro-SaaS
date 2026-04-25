@@ -1060,7 +1060,6 @@ const legendEl = document.getElementById('statusLegend');
           legendEl.innerHTML = legendHtml;
         }
       }
-      }
 
       // Top clients
       const clientBookings = {};
