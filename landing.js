@@ -2,6 +2,67 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // ===== FLOATING PARTICLES =====
+  const heroSection = document.querySelector('.hero');
+  if (heroSection) {
+    for (let i = 0; i < 15; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'floating-particle';
+      particle.style.cssText = `
+        position: absolute;
+        width: ${Math.random() * 6 + 2}px;
+        height: ${Math.random() * 6 + 2}px;
+        background: ${Math.random() > 0.5 ? 'var(--teal)' : '#8B5CF6'};
+        border-radius: 50%;
+        opacity: ${Math.random() * 0.4 + 0.1};
+        left: ${Math.random() * 100}%;
+        top: ${Math.random() * 100}%;
+        animation: float${Math.floor(Math.random() * 3 + 3)}s ease-in-out infinite;
+        animation-delay: ${Math.random() * 2}s;
+      `;
+      heroSection.appendChild(particle);
+    }
+  }
+
+  // ===== 3D TILT EFFECT FOR CARDS =====
+  document.querySelectorAll('.feature-card, .pricing-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateX = (y - centerY) / 10;
+      const rotateY = (centerX - x) / 10;
+      
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px)`;
+      card.style.transition = 'transform 0.1s ease';
+    });
+    
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+      card.style.transition = 'transform 0.4s ease';
+    });
+  });
+
+  // ===== HOVER GLOW EFFECT =====
+  document.querySelectorAll('.btn-primary-hero').forEach(btn => {
+    btn.addEventListener('mouseenter', (e) => {
+      const glow = document.createElement('div');
+      glow.className = 'btn-glow-effect';
+      glow.style.cssText = `
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(255,255,255,0.3), transparent 70%);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        animation: glowPulse 1s ease-out forwards;
+      `;
+      btn.appendChild(glow);
+    });
+  });
+
   // ===== NAVBAR SCROLL EFFECT =====
   const navbar = document.getElementById('mainNav');
   window.addEventListener('scroll', () => {
@@ -117,6 +178,54 @@ document.addEventListener('DOMContentLoaded', () => {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     });
+  });
+
+  // ===== PARALLAX EFFECT =====
+  window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY;
+    const hero = document.querySelector('.hero');
+    if (hero && scrolled < 600) {
+      const aurora = document.querySelector('.hero-aurora');
+      if (aurora) {
+        aurora.style.transform = `translateX(-50%) translateY(${scrolled * 0.3}px)`;
+      }
+    }
+  });
+
+  // ===== CURSOR TRAIL EFFECT =====
+  const cursorTrail = [];
+  let trailIndex = 0;
+  
+  document.addEventListener('mousemove', (e) => {
+    cursorTrail[trailIndex] = { x: e.clientX, y: e.clientY, age: 0 };
+    trailIndex = (trailIndex + 1) % 20;
+    
+    cursorTrail.forEach((point, i) => {
+      if (point && point.age < 15) {
+        point.age++;
+      }
+    });
+  });
+
+  // ===== SCROLL PROGRESS BAR =====
+  const progressBar = document.createElement('div');
+  progressBar.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), #8B5CF6);
+    width: 0%;
+    z-index: 1000;
+    transition: width 0.1s ease;
+  `;
+  document.body.appendChild(progressBar);
+  
+  window.addEventListener('scroll', () => {
+    const winScroll = document.documentElement.scrollTop;
+    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const scrolled = (winScroll / height) * 100;
+    progressBar.style.width = scrolled + '%';
   });
 
 });
