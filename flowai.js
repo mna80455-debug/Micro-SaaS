@@ -8,6 +8,99 @@ window.toggleFlowAI = function () {
   fab.classList.toggle('hidden');
 };
 
+// ===== AI RECOMMENDATIONS =====
+window.getAIRecommendations = async function() {
+  if (!window.currentUser) return;
+  
+  const recommendations = [];
+  
+  try {
+    const db = await import('./firebase-config.js').then(m => m.db);
+    const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
+    
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const todayEnd = todayStart + 24*60*60*1000;
+    const weekEnd = todayEnd + 7*24*60*60*1000;
+    
+    const weekQ = query(collection(db, 'appointments'), where('userId', '==', window.currentUser.uid));
+    const weekSnap = await getDocs(weekQ);
+    const weekApts = weekSnap.docs.map(d => d.data());
+    
+    const todayApts = weekApts.filter(a => a.date >= todayStart && a.date < todayEnd);
+    const pendingApts = weekApts.filter(a => a.status === 'pending');
+    
+    // 1. Check for high no-show risk clients
+    const clientHistory = {};
+    weekApts.forEach(a => {
+      if (!clientHistory[a.clientPhone]) {
+        clientHistory[a.clientPhone] = { name: a.clientName, noShow: 0, total: 0 };
+      }
+      clientHistory[a.clientPhone].total++;
+      if (a.status === 'cancelled' || a.status === 'no-show') {
+        clientHistory[a.clientPhone].noShow++;
+      }
+    });
+    
+    const atRisk = Object.values(clientHistory)
+      .filter(c => c.total >= 3 && (c.noShow / c.total) > 0.3)
+      .slice(0, 3);
+    
+    if (atRisk.length > 0) {
+      recommendations.push({
+        type: 'warning',
+        title: '⚠️ عملاء نسبة عدم الحضور عالية',
+        items: atRisk.map(c => `${c.name} - ${Math.round(c.noShow/c.total*100)}% no-show`)
+      });
+    }
+    
+    // 2. Suggest optimal times
+    const timeSlots = {};
+    weekApts.forEach(a => {
+      if (a.status === 'confirmed') {
+        const hour = a.time?.split(':')[0];
+        if (hour) timeSlots[hour] = (timeSlots[hour] || 0) + 1;
+      }
+    });
+    
+    const peakHour = Object.entries(timeSlots)
+      .sort((a, b) => b[1] - a[1])[0];
+    
+    if (peakHour) {
+      const hourNum = parseInt(peakHour[0]);
+      recommendations.push({
+        type: 'tip',
+        title: '📈 أفضل وقت للمواعيد',
+        items: [`الساعة ${hourNum}:00 - ${hourNum+1}:00 فيها أعلى طلب`]
+      });
+    }
+    
+    // 3. Remind about unconfirmed appointments
+    if (pendingApts.length > 3) {
+      recommendations.push({
+        type: 'action',
+        title: '⏰ مواعيد تنتظر تأكيد',
+        items: [`لديك ${pendingApts.length} موعد لم يتم تأكيده - راجعهم`]
+      });
+    }
+    
+    // 4. Suggest marketing
+    const activeClients = new Set(weekApts.map(a => a.clientPhone)).size;
+    if (activeClients < 10) {
+      recommendations.push({
+        type: 'tip',
+        title: '📢 نصيحة تسويقية',
+        items: ['شارك رابط الحجز مع عملائك لتزيد عدد الحجوزات']
+      });
+    }
+    
+  } catch(e) {
+    console.error('Recommendations error:', e);
+  }
+  
+  return recommendations;
+};
+
 // ===== SMART RESPONSES =====
 const smartResponses = {
   'ملخص اليوم': [

@@ -296,6 +296,55 @@ async function loadTodayTimeline(userId) {
   }
 }
 
+async function loadAIRecommendations() {
+  const container = document.getElementById('aiRecommendations');
+  if (!container || !window.currentUser) return;
+  
+  try {
+    const db = await import('./firebase-config.js').then(m => m.db);
+    const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
+    
+    const q = query(collection(db, 'appointments'), where('userId', '==', window.currentUser.uid));
+    const snap = await getDocs(q);
+    const allApts = snap.docs.map(d => d.data());
+    
+    if (allApts.length < 5) {
+      container.style.display = 'none';
+      return;
+    }
+    
+    container.style.display = 'block';
+    
+    const now = new Date();
+    const weekAgo = now.getTime() - 7*24*60*60*1000;
+    const recentApts = allApts.filter(a => a.date >= weekAgo);
+    
+    // Calculate insights
+    const completed = recentApts.filter(a => a.status === 'completed').length;
+    const cancelled = recentApts.filter(a => a.status === 'cancelled').length;
+    const pending = recentApts.filter(a => a.status === 'pending').length;
+    
+    const revenue = completed.reduce((sum, a) => sum + (a.price || 0), 0);
+    const clients = new Set(recentApts.map(a => a.clientPhone)).size;
+    
+    const html = `
+      <div class="recommendation-card">
+        <h4>🧠 توصيات FlowAI</h4>
+        <div class="rec-items">
+          ${cancelled > completed * 0.3 ? '<div class="rec-item warning">⚠️ نسبة الإلغاء عالية - فكر في تفعيل التذكيرات</div>' : ''}
+          ${pending > 5 ? '<div class="rec-item">⏰ عندك ' + pending + ' مواعيد.pending - تأكد منها</div>' : ''}
+          ${revenue > 0 ? '<div class="rec-item">💰 إيرادات الأسبوع: ' + revenue + ' ج.م</div>' : ''}
+          ${clients > 0 ? '<div class="rec-item">👥 عملاء جدد: ' + clients + '</div>' : ''}
+        </div>
+      </div>
+    `;
+    
+    container.innerHTML = html;
+  } catch(e) {
+    console.error('AI Rec error:', e);
+  }
+}
+
 window.updateAptStatus = async function(id, status) {
   try {
     await updateDoc(doc(db, 'appointments', id), { status });

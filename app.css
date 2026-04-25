@@ -387,6 +387,44 @@
 .stat-card.green { border-top: 3px solid var(--completed); }
 .stat-card.purple { border-top: 3px solid #C084FC; }
 
+/* AI Recommendations */
+.ai-recommendations {
+  margin-bottom: 24px;
+}
+
+.recommendation-card {
+  background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(0,102,255,0.08));
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.recommendation-card h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #8B5CF6;
+  margin-bottom: 12px;
+}
+
+.rec-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rec-item {
+  background: var(--bg-surface);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.rec-item.warning {
+  background: rgba(239,68,68,0.1);
+  color: #EF4444;
+}
+
 /* Dashboard Sections */
 .dashboard-section {
   margin-bottom: 40px;
