@@ -1,0 +1,14 @@
+{
+  "name": "bookflow",
+  "version": "1.0.0",
+  "description": "Premium Booking SaaS",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8000",
+    "dev": "node dev-server.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

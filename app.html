@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookFlow — لوحة التحكم</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0066FF">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <link rel="stylesheet" href="/style.css?v=4">
+  <link rel="stylesheet" href="/app.css?v=4">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Google API Client & Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js" async defer></script>
+  
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script type="text/javascript">
+    (function() {
+      // Initialize with a placeholder or the user's key if known
+      emailjs.init({ publicKey: "YOUR_PUBLIC_KEY" });
+    })();
+  </script>
+  <script>
+    window.onerror = function(msg, url, line) {
+      alert("Error: " + msg + "\nURL: " + url + "\nLine: " + line);
+    };
+  </script>
+</head>
+<body>
+
+  <!-- Auth Screen (Initially hidden, managed by auth.js) -->
+  <div id="authScreen" class="auth-screen hidden">
+    <div class="auth-box">
+      <div class="auth-logo"><i class="ph-fill ph-lightning"></i> BookFlow</div>
+      <h2 class="auth-title">أهلاً بيك</h2>
+      <p class="auth-sub">سجل دخولك وابدأ تنظيم مواعيدك</p>
+
+      <button class="btn-google-login" id="btnGoogleLogin">
+        <i class="ph-bold ph-google-logo" style="font-size: 1.2rem;"></i>
+        متابعة بـ Google
+      </button>
+
+      <div class="auth-divider"><span>أو</span></div>
+
+      <div id="authForm">
+        <div class="form-group">
+          <label for="authEmail">الإيميل</label>
+          <input type="email" id="authEmail" class="form-input" placeholder="your@email.com" />
+        </div>
+        <div class="form-group">
+          <label for="authPassword">كلمة المرور</label>
+          <input type="password" id="authPassword" class="form-input" placeholder="••••••••" />
+        </div>
+        <button class="btn-auth-submit" id="authSubmitBtn">
+          تسجيل الدخول
+        </button>
+      </div>
+
+      <p class="auth-switch">
+        مش عندك حساب؟
+        <button id="toggleAuthBtn">سجل دلوقتي</button>
+      </p>
+    </div>
+  </div>
+
+  <!-- Main App Layout -->
+  <div class="app-container hidden" id="appContainer">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <i class="ph-fill ph-lightning"></i>
+        <span>BookFlow</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item active" data-page="dashboard">
+          <i class="ph-bold ph-squares-four nav-icon"></i>
+          <span class="nav-label">الرئيسية</span>
+        </a>
+        <a class="nav-item" data-page="calendar">
+          <i class="ph-bold ph-calendar-blank nav-icon"></i>
+          <span class="nav-label">التقويم</span>
+          <span class="nav-badge" id="todayCountBadge">0</span>
+        </a>
+        <a class="nav-item nav-new" onclick="window.openNewAppointmentModal()">
+          <i class="ph-bold ph-plus nav-icon"></i>
+          <span class="nav-label">حجز جديد</span>
+        </a>
+        <a class="nav-item" data-page="clients">
+          <i class="ph-bold ph-users nav-icon"></i>
+          <span class="nav-label">العملاء</span>
+        </a>
+        <a class="nav-item" data-page="services">
+          <i class="ph-bold ph-stack nav-icon"></i>
+          <span class="nav-label">الخدمات</span>
+        </a>
+        <a class="nav-item" data-page="stats">
+          <i class="ph-bold ph-trend-up nav-icon"></i>
+          <span class="nav-label">الإحصائيات</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <a class="nav-item" data-page="settings">
+          <i class="ph-bold ph-gear nav-icon"></i>
+          <span class="nav-label">الإعدادات</span>
+        </a>
+        <div class="sidebar-user" id="sidebarUserBtn">
+          <div class="user-avatar" id="sidebarAvatar">م</div>
+          <div class="user-info">
+            <span id="sidebarName">...</span>
+            <span id="sidebarPlan" class="plan-badge">Free</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="main-content">
+      
+      <!-- VIEW: Dashboard -->
+      <div id="dashboardView" class="view active">
+        <div class="dashboard-greeting">
+          <div>
+            <h1 id="greetingText">صباح الخير 👋</h1>
+            <p id="greetingDate">...</p>
+          </div>
+          <button class="btn-new-appointment" onclick="window.openNewAppointmentModal()">
+            <i class="ph-bold ph-plus"></i> حجز جديد
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card teal">
+            <div class="stat-icon"><i class="ph-fill ph-calendar-check text-teal"></i></div>
+            <div class="stat-value" id="statToday">0</div>
+            <div class="stat-label">مواعيد اليوم</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-icon"><i class="ph-fill ph-hourglass-medium text-amber"></i></div>
+            <div class="stat-value" id="statPending">0</div>
+            <div class="stat-label">منتظر التأكيد</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon"><i class="ph-fill ph-money text-green"></i></div>
+            <div class="stat-value" id="statRevenue">0</div>
+            <div class="stat-label">إيرادات الشهر (ج.م)</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon"><i class="ph-fill ph-users text-purple"></i></div>
+            <div class="stat-value" id="statClients">0</div>
+            <div class="stat-label">إجمالي العملاء</div>
+          </div>
+        </div>
+
+        <div class="dashboard-two-col">
+          <div class="dashboard-section">
+            <div class="section-header">
+              <h2>مواعيد اليوم</h2>
+              <button onclick="document.querySelector('[data-page=\'calendar\']').click()">شوف الكل <i class="ph-bold ph-arrow-left"></i></button>
+            </div>
+            <div id="todayTimeline" class="today-timeline">
+              <!-- Timeline JS Gen -->
+            </div>
+          </div>
+          <div class="dashboard-section">
+            <div class="section-header">
+              <h2>آخر العملاء</h2>
+              <button onclick="document.querySelector('[data-page=\'clients\']').click()">شوف الكل <i class="ph-bold ph-arrow-left"></i></button>
+            </div>
+            <div id="recentClientsList">
+              <!-- JS Gen -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: Calendar -->
+      <div id="calendarView" class="view">
+        <div class="custom-calendar-header">
+          <div>
+            <h1 id="calMonthDisplay" style="font-size: 1.5rem;">أبريل 2026</h1>
+            <p class="text-secondary">عرض الأسبوع</p>
+          </div>
+          <div class="cal-nav-buttons">
+            <button id="btnPrevWeek" title="الأسبوع السابق"><i class="ph-bold ph-caret-right"></i></button>
+            <button id="btnToday" title="الذهاب لليوم">اليوم</button>
+            <button id="btnNextWeek" title="الأسبوع التالي"><i class="ph-bold ph-caret-left"></i></button>
+          </div>
+        </div>
+        <div id="calendarGrid" class="calendar-wrapper">
+          <!-- JS Grid -->
+        </div>
+      </div>
+
+      <!-- VIEW: Clients -->
+      <div id="clientsView" class="view">
+        <div class="section-header">
+          <h2>العملاء</h2>
+          <button class="btn-primary btn-sm" onclick="window.openModal('newClientModal')">+ إضافة عميل</button>
+        </div>
+        <div class="client-search-box max-w-400 mb-24">
+          <div class="form-input d-flex align-center gap-2">
+            <i class="ph-bold ph-magnifying-glass text-secondary"></i>
+            <input type="text" id="clientsSearchInput" placeholder="ابحث بالاسم أو الموبايل..." oninput="window.searchClients(this.value)" class="bg-transparent border-none outline-none w-full font-body">
+          </div>
+        </div>
+        <div id="clientsList"></div>
+      </div>
+
+      <!-- VIEW: Services -->
+      <div id="servicesView" class="view">
+        <div class="section-header">
+          <h2>الخدمات</h2>
+          <button class="btn-primary btn-sm" onclick="window.openModal('newServiceModal')">+ خدمة جديدة</button>
+        </div>
+        <div id="servicesList"></div>
+      </div>
+
+      <!-- New Service Modal -->
+      <div id="newServiceModal" class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h2 class="modal-title">⚙️ خدمة جديدة</h2>
+            <button class="modal-close" onclick="window.closeModal('newServiceModal')" title="إغلاق"><i class="ph-bold ph-x"></i></button>
+          </div>
+          <div>
+            <div class="form-group">
+              <label for="newServiceName">اسم الخدمة *</label>
+              <input type="text" id="newServiceName" class="form-input" placeholder="مثال: استشارة، كشف عادي" />
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="newServiceDuration">المدة (دقيقة)</label>
+                <input type="number" id="newServiceDuration" class="form-input" value="30" />
+              </div>
+              <div class="form-group">
+                <label for="newServicePrice">السعر (ج.م)</label>
+                <input type="number" id="newServicePrice" class="form-input" value="0" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="newServiceDesc">الوصف (اختياري)</label>
+              <textarea id="newServiceDesc" class="form-input" rows="2" placeholder="وصف مختصر للخدمة"></textarea>
+            </div>
+            <div class="modal-nav">
+              <button class="btn-save-apt" onclick="window.saveNewService()">💾 حفظ الخدمة</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Service Modal -->
+      <div id="editServiceModal" class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h2 class="modal-title">✏️ تعديل خدمة</h2>
+            <button class="modal-close" onclick="window.closeModal('editServiceModal')" title="إغلاق"><i class="ph-bold ph-x"></i></button>
+          </div>
+          <div>
+            <input type="hidden" id="editServiceId" />
+            <div class="form-group">
+              <label for="editServiceName">اسم الخدمة *</label>
+              <input type="text" id="editServiceName" class="form-input" />
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="editServiceDuration">المدة (دقيقة)</label>
+                <input type="number" id="editServiceDuration" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label for="editServicePrice">السعر (ج.م)</label>
+                <input type="number" id="editServicePrice" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="editServiceDesc">الوصف (اختياري)</label>
+              <textarea id="editServiceDesc" class="form-input" rows="2"></textarea>
+            </div>
+            <div class="modal-nav">
+              <button class="btn-step-back" onclick="window.deleteService()">🗑️ حذف</button>
+              <button class="btn-save-apt" onclick="window.updateService()">💾 حفظ التعديلات</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointment Details Modal -->
+      <div id="aptDetailsModal" class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h2 class="modal-title">📅 تفاصيل الموعد</h2>
+            <button class="modal-close" onclick="window.closeModal('aptDetailsModal')" title="إغلاق"><i class="ph-bold ph-x"></i></button>
+          </div>
+          <div>
+            <input type="hidden" id="editAptId" />
+            <div class="form-group">
+              <label for="editAptClientName">اسم العميل *</label>
+              <input type="text" id="editAptClientName" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="editAptClientPhone">رقم الموبايل</label>
+              <input type="tel" id="editAptClientPhone" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="editAptService">الخدمة</label>
+              <input type="text" id="editAptService" class="form-input" />
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="form-group">
+                <label for="editAptDate">التاريخ</label>
+                <input type="date" id="editAptDate" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label for="editAptTime">الوقت</label>
+                <input type="time" id="editAptTime" class="form-input" />
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="editAptPrice">السعر (ج.م)</label>
+                <input type="number" id="editAptPrice" class="form-input" placeholder="0" />
+              </div>
+              <div class="form-group">
+                <label for="editAptStatus">الحالة</label>
+                <select id="editAptStatus" class="form-select">
+                  <option value="confirmed">✅ مؤكد</option>
+                  <option value="pending">⏳ منتظر</option>
+                  <option value="completed">🎉 اكتمل</option>
+                  <option value="cancelled">❌ ملغي</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="editAptNotes">ملاحظات</label>
+              <textarea id="editAptNotes" class="form-input" rows="2" placeholder="ملاحظات إضافية..."></textarea>
+            </div>
+            <div class="modal-nav">
+              <button class="btn-step-back" onclick="window.deleteAppointment()">🗑️ حذف الموعد</button>
+              <button class="btn-save-apt" onclick="window.updateAppointment()">💾 حفظ التعديلات</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: Stats -->
+      <div id="statsView" class="view">
+        <h1 class="mb-24">📈 الإحصائيات</h1>
+        
+        <div class="stats-grid grid-2 mb-32">
+          <div class="stat-card teal">
+            <div class="stat-icon"><i class="ph-fill ph-calendar-check text-teal"></i></div>
+            <div class="stat-value" id="statTotalApts">0</div>
+            <div class="stat-label">إجمالي الحجوزات</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-icon"><i class="ph-fill ph-check-circle text-green"></i></div>
+            <div class="stat-value" id="statCompletedApts">0</div>
+            <div class="stat-label">الحجوزات المكتملة</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon"><i class="ph-fill ph-money text-green"></i></div>
+            <div class="stat-value" id="statTotalRevenue">0</div>
+            <div class="stat-label">إجمالي الإيرادات (ج.م)</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon"><i class="ph-fill ph-users text-purple"></i></div>
+            <div class="stat-value" id="statTotalClients">0</div>
+            <div class="stat-label">إجمالي العملاء</div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h3>📊 هذا الشهر</h3>
+          <div class="stats-grid grid-3">
+            <div class="stat-card teal">
+              <div class="stat-value" id="statThisMonthApts">0</div>
+              <div class="stat-label">عدد الحجوزات</div>
+            </div>
+            <div class="stat-card green">
+              <div class="stat-value" id="statThisMonthRevenue">0</div>
+              <div class="stat-label">الإيرادات</div>
+            </div>
+            <div class="stat-card amber">
+              <div class="stat-value" id="statThisMonthCancelled">0</div>
+              <div class="stat-label">الملغيات</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h3>🏆 أفضل العملاء</h3>
+          <div id="topClientsList"></div>
+        </div>
+      </div>
+
+      <!-- VIEW: Settings -->
+      <div id="settingsView" class="view">
+        <div class="section-header">
+          <h2>الإعدادات</h2>
+          <button class="btn-secondary text-danger border-danger" id="btnLogOut">تسجيل الخروج</button>
+        </div>
+
+        <div class="dashboard-section">
+          <h3 data-i18n="personal_settings">👤 الإعدادات الشخصية</h3>
+          
+          <div class="d-flex gap-3 mt-16 mb-16">
+            <button class="btn-secondary" id="btnToggleTheme"><i class="ph-bold ph-sun"></i> الوضع الفاتح</button>
+            <button class="btn-secondary" id="btnToggleLang"><i class="ph-bold ph-translate"></i> English</button>
+          </div>
+          
+          <div class="d-flex gap-3 mb-16">
+            <button class="btn-secondary text-teal border-teal" id="btnVerifyEmail" onclick="window.checkAndSendVerification()">
+              <i class="ph-bold ph-envelope"></i> تفعيل الإيميل
+            </button>
+          </div>
+
+          <div class="bg-surface p-24 radius-sm border">
+            <div class="form-row grid-2">
+              <div class="form-group">
+                <label for="settingName">اسمك الكامل</label>
+                <input type="text" id="settingName" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label for="settingBusiness">اسم العيادة / العمل</label>
+                <input type="text" id="settingBusiness" class="form-input" />
+              </div>
+            </div>
+            
+            <div class="form-group w-50">
+              <label for="settingType">مجال العمل</label>
+              <select id="settingType" class="form-select" title="مجال العمل">
+                <option value="clinic">🏥 عيادة</option>
+                <option value="coaching">🎯 كوتشينج</option>
+                <option value="tutor">📚 مدرس خصوصي</option>
+                <option value="other">📦 أخرى</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h3>🔗 رابط الحجز</h3>
+          <div class="bg-surface p-24 radius-sm border mt-16 d-flex flex-col gap-4">
+            <p class="text-secondary btn-sm">استخدم هذا الرابط لإرساله لعملائك ليقوموا بالحجز بأنفسهم.</p>
+            <div class="d-flex align-center bg-void border radius-sm p-8-16">
+              <span class="text-secondary ml-8" dir="ltr">bookflow.app/book/</span>
+              <input type="text" id="bookingUsername" class="form-input flex-1 border-none bg-transparent p-0" dir="ltr" placeholder="username" title="اسم المستخدم لصفحة الحجز"/>
+            </div>
+            <div class="d-flex gap-3">
+              <button class="btn-secondary" id="btnCopyLink"><i class="ph-bold ph-copy"></i> نسخ الرابط</button>
+              <button class="btn-primary" id="btnSaveSettings">💾 حفظ الإعدادات</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h3>⏰ مواعيد العمل</h3>
+          <div class="bg-surface p-24 radius-sm border mt-16 d-flex flex-col gap-4">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="form-group">
+                <label for="settingStartTime">وقت البداية</label>
+                <input type="time" id="settingStartTime" class="form-input" value="09:00" />
+              </div>
+              <div class="form-group">
+                <label for="settingEndTime">وقت النهاية</label>
+                <input type="time" id="settingEndTime" class="form-input" value="18:00" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="settingSlotDuration">مدة الحجز الافتراضية (دقائق)</label>
+              <select id="settingSlotDuration" class="form-select" title="مدة الحجز">
+                <option value="15">15 دقيقة</option>
+                <option value="30" selected>30 دقيقة</option>
+                <option value="45">45 دقيقة</option>
+                <option value="60">60 دقيقة</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>أيام العمل</label>
+              <div class="d-flex gap-2 flex-wrap" id="workDaysContainer">
+                <label class="day-toggle"><input type="checkbox" value="0" /> أحد</label>
+                <label class="day-toggle"><input type="checkbox" value="1" /> إثنين</label>
+                <label class="day-toggle"><input type="checkbox" value="2" /> ثلاثاء</label>
+                <label class="day-toggle"><input type="checkbox" value="3" /> أربعاء</label>
+                <label class="day-toggle"><input type="checkbox" value="4" /> خميس</label>
+                <label class="day-toggle"><input type="checkbox" value="5" /> جمعة</label>
+                <label class="day-toggle"><input type="checkbox" value="6" /> سبت</label>
+              </div>
+            </div>
+            <button class="btn-primary" id="btnSaveWorkHours" style="align-self: flex-start;">💾 حفظ مواعيد العمل</button>
+          </div>
+        </div>
+
+        <!-- Google Calendar Sync -->
+        <div class="dashboard-section">
+          <h3>📅 مزامنة تقويم جوجل</h3>
+          <div class="bg-surface p-24 radius-sm border mt-16 d-flex flex-col gap-8">
+            <p class="text-secondary btn-sm">قم بربط حسابك بمقويم جوجل لتتم إضافة الحجوزات تلقائياً إلى تقويمك الخاص.</p>
+            <div id="gcalStatus" class="d-flex align-center gap-3 p-12-16 radius-sm border bg-void" style="border-style: dashed;">
+              <div class="stat-icon" style="background: rgba(66, 133, 244, 0.1); color: #4285F4;"><i class="ph-bold ph-google-logo"></i></div>
+              <div class="flex-1">
+                <div id="gcalStatusText" style="font-weight: 600;">غير متصل حالياً</div>
+                <div class="btn-sm text-secondary">التقويم الأساسي (Primary)</div>
+              </div>
+              <button class="btn-primary" id="btnConnectGcal" onclick="window.handleConnectGcal()">
+                ربط التقويم <i class="ph-bold ph-link"></i>
+              </button>
+            </div>
+          </div>
+        <!-- Payment Methods -->
+        <div class="dashboard-section">
+          <h3>💳 طرق الدفع وتحصيل الفلوس</h3>
+          <div class="bg-surface p-24 radius-sm border mt-16 d-flex flex-col gap-16">
+            <p class="text-secondary btn-sm">فعل طرق الدفع اللي عايز تستلم عليها فلوسك من العملاء.</p>
+            
+            <!-- Vodafone Cash -->
+            <div class="d-flex align-center gap-3 p-12-16 radius-sm border bg-void">
+              <div class="stat-icon" style="background: rgba(230, 0, 0, 0.1); color: #E60000;"><i class="ph-fill ph-phone"></i></div>
+              <div class="flex-1">
+                <div style="font-weight: 600;">فودافون كاش (Vodafone Cash)</div>
+                <input type="tel" id="settingVodafoneCash" class="form-input mt-4" placeholder="رقم فودافون كاش الخاص بك" dir="ltr" />
+              </div>
+              <div class="form-switch">
+                <input type="checkbox" id="enableVodafoneCash" checked />
+              </div>
+            </div>
+
+            <!-- Stripe (Card) -->
+            <div class="d-flex align-center gap-3 p-12-16 radius-sm border bg-void">
+              <div class="stat-icon" style="background: rgba(103, 114, 229, 0.1); color: #6772E5;"><i class="ph-fill ph-credit-card"></i></div>
+              <div class="flex-1">
+                <div style="font-weight: 600;">الدفع بالكارت (Stripe)</div>
+                <input type="text" id="settingStripeKey" class="form-input mt-4" placeholder="Stripe Public Key (pk_test...)" dir="ltr" />
+              </div>
+              <div class="form-switch">
+                <input type="checkbox" id="enableStripe" />
+              </div>
+            </div>
+
+            <button class="btn-primary" id="btnSavePayments" style="align-self: flex-start;">💾 حفظ إعدادات الدفع</button>
+          </div>
+        </div>
+
+        <!-- Social Media & Communication -->
+        <div class="dashboard-section">
+          <h3>📱 التواصل والسوشيال ميديا</h3>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 8px; margin-bottom: 16px;">أضف روابط التواصل الخاصة بك — ستظهر للعملاء في صفحة الحجز</p>
+          <div class="bg-surface p-24 radius-sm border d-flex flex-col gap-4">
+            
+            <div class="form-group">
+              <label><i class="ph-fill ph-whatsapp-logo" style="color: #25D366; font-size: 1.1rem;"></i> رقم واتساب (للعملاء)</label>
+              <div class="d-flex gap-2">
+                <input type="tel" id="settingWhatsApp" class="form-input flex-1" placeholder="01012345678" dir="ltr" />
+                <button class="btn-secondary whitespace-nowrap" onclick="window.testWhatsApp()">
+                  <i class="ph-bold ph-paper-plane-tilt"></i> تجربة
+                </button>
+              </div>
+              <small class="text-muted btn-xs mt-4 d-block">سيظهر زر واتساب في صفحة الحجز وبجانب كل عميل</small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="form-group">
+                <label><i class="ph-fill ph-instagram-logo" style="color: #E4405F; font-size: 1.1rem;"></i> Instagram</label>
+                <input type="text" id="settingInstagram" class="form-input" placeholder="@username" dir="ltr" />
+              </div>
+              <div class="form-group">
+                <label><i class="ph-fill ph-facebook-logo" style="color: #1877F2; font-size: 1.1rem;"></i> Facebook</label>
+                <input type="text" id="settingFacebook" class="form-input" placeholder="facebook.com/page" dir="ltr" />
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="form-group">
+                <label><i class="ph-fill ph-tiktok-logo" style="color: var(--text-primary); font-size: 1.1rem;"></i> TikTok</label>
+                <input type="text" id="settingTikTok" class="form-input" placeholder="@username" dir="ltr" />
+              </div>
+              <div class="form-group">
+                <label><i class="ph-fill ph-globe" style="color: var(--teal); font-size: 1.1rem;"></i> الموقع الإلكتروني</label>
+                <input type="text" id="settingWebsite" class="form-input" placeholder="https://mysite.com" dir="ltr" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label><i class="ph-fill ph-chat-teardrop-dots" style="color: #8B5CF6; font-size: 1.1rem;"></i> رسالة ترحيب واتساب التلقائية</label>
+              <textarea id="settingWaMessage" class="form-input" rows="2" placeholder="مثال: مرحباً! أنا من عيادة د/ أحمد. كيف أقدر أساعدك؟">مرحباً! حابب أحجز موعد لو سمحت 📅</textarea>
+              <small class="text-muted btn-xs mt-4 d-block">هذه الرسالة ستُملأ تلقائياً عندما يضغط العميل على زر واتساب</small>
+            </div>
+
+            <button class="btn-primary" id="btnSaveSocial" style="align-self: flex-start;">
+              <i class="ph-bold ph-floppy-disk"></i> حفظ بيانات التواصل
+            </button>
+          </div>
+
+          <!-- Preview Social Links -->
+          <div class="mt-16 bg-surface p-20 radius-sm border">
+            <p class="text-secondary btn-xs mb-12">معاينة — هكذا ستظهر للعملاء:</p>
+            <div id="socialPreview" class="social-preview">
+              <a class="social-link whatsapp" href="#" id="previewWa"><i class="ph-fill ph-whatsapp-logo"></i> واتساب</a>
+              <a class="social-link instagram" href="#" id="previewIg"><i class="ph-fill ph-instagram-logo"></i> Instagram</a>
+              <a class="social-link facebook" href="#" id="previewFb"><i class="ph-fill ph-facebook-logo"></i> Facebook</a>
+              <a class="social-link tiktok" href="#" id="previewTk"><i class="ph-fill ph-tiktok-logo"></i> TikTok</a>
+              <a class="social-link website" href="#" id="previewWeb"><i class="ph-fill ph-globe"></i> الموقع</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </main>
+  </div>
+
+  <!-- New Appointment Modal -->
+  <div id="newAppointmentModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">➕ حجز جديد</h2>
+        <button class="modal-close" onclick="window.closeModal('newAppointmentModal')" title="إغلاق"><i class="ph-bold ph-x"></i></button>
+      </div>
+
+      <div class="modal-steps">
+        <div class="modal-step active" id="step1Ind">1. العميل</div>
+        <div class="modal-step" id="step2Ind">2. التفاصيل</div>
+      </div>
+
+      <div id="modalStep1">
+        <div class="form-group">
+          <label for="aptClientName">اسم العميل *</label>
+          <input type="text" id="aptClientName" class="form-input" placeholder="مثال: أحمد محمود" />
+        </div>
+        <div class="form-group">
+          <label for="aptClientPhone">رقم الموبايل *</label>
+          <input type="tel" id="aptClientPhone" class="form-input" placeholder="01012345678" />
+        </div>
+        <button class="btn-step-next" onclick="window.modalGoToStep(2)">التالي <i class="ph-bold ph-arrow-left"></i></button>
+      </div>
+
+      <div id="modalStep2" style="display:none;">
+        <div class="form-group">
+          <label for="aptService">الخدمة</label>
+          <select id="aptService" class="form-select" title="اختر الخدمة">
+            <option value="">اختر خدمة أو اكتب manualmente...</option>
+          </select>
+          <input type="text" id="aptServiceCustom" class="form-input mt-8" placeholder="أو اكتبخدمة أخرى..." title="خدمة مخصصة" />
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label for="aptDate">التاريخ</label>
+            <input type="date" id="aptDate" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="aptTime">الوقت</label>
+            <input type="time" id="aptTime" class="form-input" />
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label for="aptPrice">السعر (ج.م)</label>
+            <input type="number" id="aptPrice" class="form-input" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="aptStatus">الحالة</label>
+            <select id="aptStatus" class="form-select" title="الحالة">
+              <option value="confirmed">✅ مؤكد</option>
+              <option value="pending">⏳ منتظر</option>
+              <option value="completed">🎉 اكتمل</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-nav">
+          <button class="btn-step-back" onclick="window.modalGoToStep(1)"><i class="ph-bold ph-arrow-right"></i> رجوع</button>
+          <button class="btn-save-apt" id="btnSaveAppointment">💾 حفظ الموعد</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Client Modal -->
+  <div id="newClientModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">👥 عميل جديد</h2>
+        <button class="modal-close" onclick="window.closeModal('newClientModal')" title="إغلاق"><i class="ph-bold ph-x"></i></button>
+      </div>
+
+      <div>
+        <div class="form-group">
+          <label for="newClientNameInput">اسم العميل *</label>
+          <input type="text" id="newClientNameInput" class="form-input" placeholder="اسم العميل" title="اسم العميل الجديد" />
+        </div>
+        <div class="form-group">
+          <label for="newClientPhoneInput">رقم الموبايل</label>
+          <input type="tel" id="newClientPhoneInput" class="form-input" placeholder="010..." title="رقم موبايل العميل" />
+        </div>
+        <div class="modal-nav">
+          <button class="btn-save-apt" onclick="window.saveNewClientForm()">💾 حفظ العميل</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Client Modal -->
+  <div id="editClientModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">✏️ تعديل بيانات العميل</h2>
+        <button class="modal-close" onclick="window.closeModal('editClientModal')" title="إغلاق"><i class="ph-bold ph-x"></i></button>
+      </div>
+      <div>
+        <input type="hidden" id="editClientId" />
+        <div class="form-group">
+          <label for="editClientName">اسم العميل *</label>
+          <input type="text" id="editClientName" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label for="editClientPhone">رقم الموبايل</label>
+          <input type="tel" id="editClientPhone" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label for="editClientEmail">البريد الإلكتروني</label>
+          <input type="email" id="editClientEmail" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label for="editClientNotes">ملاحظات</label>
+          <textarea id="editClientNotes" class="form-input" rows="2"></textarea>
+        </div>
+        <div class="modal-nav">
+          <button class="btn-step-back" onclick="window.deleteClient()">🗑️ حذف</button>
+          <button class="btn-save-apt" onclick="window.updateClient()">💾 حفظ التعديلات</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FlowAI Floating Assistant -->
+  <div class="flowai-fab" id="flowAiFab" onclick="window.toggleFlowAI()">
+    <div class="fab-pulse"></div>
+    <i class="ph-fill ph-brain"></i>
+  </div>
+
+  <div class="flowai-panel" id="flowAiPanel">
+    <div class="flowai-header">
+      <div class="flowai-header-info">
+        <div class="flowai-avatar">
+          <i class="ph-fill ph-brain"></i>
+        </div>
+        <div>
+          <div class="flowai-name">FlowAI</div>
+          <div class="flowai-status"><span class="flowai-dot"></span> مساعدك الذكي</div>
+        </div>
+      </div>
+      <button class="flowai-close" onclick="window.toggleFlowAI()" title="إغلاق">
+        <i class="ph-bold ph-x"></i>
+      </button>
+    </div>
+
+    <div class="flowai-body" id="flowAiBody">
+      <div class="flowai-welcome">
+        <div class="flowai-welcome-icon">🤖</div>
+        <h4>مرحباً! أنا FlowAI</h4>
+        <p>مساعدك الذكي لإدارة مواعيدك وعملائك بكفاءة</p>
+      </div>
+
+      <div class="flowai-suggestions">
+        <button class="flowai-chip" onclick="window.askFlowAI('ملخص اليوم')">
+          <i class="ph-bold ph-calendar-check"></i> ملخص اليوم
+        </button>
+        <button class="flowai-chip" onclick="window.askFlowAI('نصائح ذكية')">
+          <i class="ph-bold ph-lightbulb"></i> نصائح ذكية
+        </button>
+        <button class="flowai-chip" onclick="window.askFlowAI('تحليل الأداء')">
+          <i class="ph-bold ph-chart-line-up"></i> تحليل الأداء
+        </button>
+      </div>
+
+      <div class="flowai-messages" id="flowAiMessages">
+        <!-- Messages will be added here by JS -->
+      </div>
+    </div>
+
+    <div class="flowai-input-area">
+      <input type="text" id="flowAiInput" placeholder="اسأل FlowAI أي سؤال..." onkeypress="if(event.key==='Enter') window.sendFlowAI()">
+      <button onclick="window.sendFlowAI()" class="flowai-send" title="إرسال">
+        <i class="ph-fill ph-paper-plane-tilt"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Module Scripts -->
+  <script type="module" src="/firebase-config.js?v=4"></script>
+  <script type="module" src="/components/toast.js?v=4"></script>
+  <script type="module" src="/components/modal.js?v=4"></script>
+  <script type="module" src="/i18n.js?v=4"></script>
+  <script type="module" src="/auth.js?v=4"></script>
+  <script type="module" src="/calendar.js?v=4"></script>
+  <script type="module" src="/dashboard.js?v=4"></script>
+  <script src="/flowai.js?v=4"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW Failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>

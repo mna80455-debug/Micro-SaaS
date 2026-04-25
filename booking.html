@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>احجز موعدك</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0066FF">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="booking.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script type="text/javascript">
+    (function() {
+      // Initialize with a placeholder or the user's key if known
+      emailjs.init({ publicKey: "YOUR_PUBLIC_KEY" });
+    })();
+  </script>
+</head>
+<body class="booking-page">
+
+  <div class="booking-container">
+    
+    <!-- Provider Info -->
+    <div class="booking-header">
+      <div class="provider-avatar" id="providerAvatar"><i class="ph-bold ph-spinner-gap ph-spin"></i></div>
+      <div>
+        <h1 id="providerName">جاري التحميل...</h1>
+        <p id="providerType">يرجى الانتظار</p>
+      </div>
+    </div>
+    
+    <!-- Social Media Contact Bar -->
+    <div id="providerSocialBar" class="provider-social-bar hidden">
+      <a id="bookWaLink" href="#" target="_blank" class="social-link-mini whatsapp hidden">
+        <i class="ph-fill ph-whatsapp-logo"></i> واتساب
+      </a>
+      <a id="bookIgLink" href="#" target="_blank" class="social-link-mini instagram hidden">
+        <i class="ph-fill ph-instagram-logo"></i> Instagram
+      </a>
+      <a id="bookFbLink" href="#" target="_blank" class="social-link-mini facebook hidden">
+        <i class="ph-fill ph-facebook-logo"></i> Facebook
+      </a>
+      <a id="bookTkLink" href="#" target="_blank" class="social-link-mini tiktok hidden">
+        <i class="ph-fill ph-tiktok-logo"></i> TikTok
+      </a>
+      <a id="bookWebLink" href="#" target="_blank" class="social-link-mini website hidden">
+        <i class="ph-fill ph-globe"></i> الموقع
+      </a>
+    </div>
+
+    <!-- 3 Steps Wizard -->
+    <div class="booking-steps">
+
+      <!-- Step 1: Choose Service -->
+      <div id="bookStep1" class="book-step">
+        <h2>اختار الخدمة</h2>
+        <div id="bookServicesList" class="book-services-grid">
+          <!-- JS Gen -->
+        </div>
+        <button class="btn-book-next" id="btnNextStep1" disabled>التالي <i class="ph-bold ph-arrow-left"></i></button>
+      </div>
+
+      <!-- Step 2: Choose Date & Time -->
+      <div id="bookStep2" class="book-step hidden">
+        <div class="d-flex justify-between align-center mb-24">
+          <h2>اختار الموعد</h2>
+          <button class="bg-transparent text-secondary" onclick="window.goBookStep(1)"><i class="ph-bold ph-arrow-right"></i> رجوع</button>
+        </div>
+        
+        <div class="form-group">
+          <label for="bookDateInput" class="hidden">اختار التاريخ</label>
+          <input type="date" id="bookDateInput" class="book-input" title="اختار التاريخ" />
+        </div>
+        
+        <h3 class="btn-sm text-secondary mt-16">المواعيد المتاحة</h3>
+        <div id="bookTimeSlots" class="book-time-slots">
+          <!-- JS Gen -->
+        </div>
+
+        <button class="btn-book-next" id="btnNextStep2" disabled>التالي <i class="ph-bold ph-arrow-left"></i></button>
+      </div>
+
+      <!-- Step 3: Your Info -->
+      <div id="bookStep3" class="book-step hidden">
+        <div class="d-flex justify-between align-center mb-24">
+          <h2>بياناتك</h2>
+          <button class="bg-transparent text-secondary" onclick="window.goBookStep(2)"><i class="ph-bold ph-arrow-right"></i> رجوع</button>
+        </div>
+
+        <div class="form-group">
+          <label for="bookClientName" class="hidden">اسمك بالكامل</label>
+          <input type="text" id="bookClientName" placeholder="اسمك الكامل *" class="book-input" title="اسمك الكامل" />
+        </div>
+        <div class="form-group">
+          <label for="bookClientPhone" class="hidden">رقم الموبايل</label>
+          <input type="tel" id="bookClientPhone" placeholder="رقم موبايلك للتواصل *" class="book-input" title="رقم موبايلك" />
+        </div>
+        <div class="form-group">
+          <label for="bookClientEmail" class="hidden">البريد الإلكتروني</label>
+          <input type="email" id="bookClientEmail" placeholder="إيميلك (اختياري)" class="book-input" title="إيميلك" />
+        </div>
+        
+        <div class="form-group">
+          <label for="bookClientNotes" class="hidden">ملاحظات</label>
+          <textarea id="bookClientNotes" placeholder="أي ملاحظات أو تفاصيل إضافية..." class="book-input" rows="3" title="ملاحظات إضافية"></textarea>
+        </div>
+
+        <!-- Payment Info (Visible if service has price) -->
+        <div id="paymentSection" class="booking-payment-card hidden">
+          <div class="d-flex justify-between align-center mb-16">
+            <h3>طريقة الدفع</h3>
+            <span class="price-tag" id="paymentPrice">0 ج.م</span>
+          </div>
+          
+          <div id="vodafoneCashOption" class="payment-option hidden">
+            <div class="d-flex align-center gap-3 mb-8">
+              <div class="stat-icon-sm" style="background: #E60000; color: #fff;"><i class="ph-fill ph-phone"></i></div>
+              <span style="font-weight: 600;">تحويل فودافون كاش</span>
+            </div>
+            <p class="text-secondary btn-sm mb-12">يرجى تحويل المبلغ للرقم التالي وتأكيد الحجز:</p>
+            <div class="d-flex align-center bg-void border radius-sm p-8-12 gap-2">
+              <code id="vcashNumberDisplay" style="font-size: 1.1rem; font-weight: bold; letter-spacing: 1px;">010...</code>
+              <button class="bg-transparent text-teal" onclick="window.copyVcash()"><i class="ph-bold ph-copy"></i></button>
+            </div>
+          </div>
+
+          <div id="stripeOption" class="payment-option hidden">
+            <!-- Future Stripe integration -->
+            <button class="btn-secondary w-full" disabled><i class="ph-bold ph-credit-card"></i> الدفع بالكارت (قريباً)</button>
+          </div>
+        </div>
+        
+        <button class="btn-confirm-booking" id="btnConfirmBooking">
+          تأكيد الحجز ✅
+        </button>
+      </div>
+
+      <!-- Success Screen -->
+      <div id="bookSuccess" class="booking-success hidden">
+        <div class="success-icon">🎉</div>
+        <h2>تم الحجز بنجاح!</h2>
+        <p>هيتواصل معاك مقدم الخدمة قريباً لتأكيد الموعد.</p>
+        
+        <div class="booking-summary" id="bookingSummary">
+          <!-- JS Gen -->
+        </div>
+
+        <button class="btn-secondary mt-24 w-full" onclick="location.reload()">
+          حجز موعد آخر
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Module Scripts -->
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="components/toast.js"></script>
+  <script type="module" src="booking.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW Failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
