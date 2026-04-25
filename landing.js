@@ -1,4 +1,5 @@
 // landing.js — Premium Landing Page Interactions
+import { CONFIG } from './config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -227,5 +228,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const scrolled = (winScroll / height) * 100;
     progressBar.style.width = scrolled + '%';
   });
+
+  // ===== STRIPE PAYMENT =====
+  window.upgradeToPro = async function() {
+    const user = JSON.parse(localStorage.getItem('bookflow_user'));
+    if (!user) {
+      window.location.href = 'app.html?redirect=upgrade';
+      return;
+    }
+
+    const confirmMsg = 'سيتم توجيهك لصفحة الدفع Stripe لإتمام الاشتراك!\nالسعر: 99 ج.م/شهر';
+    if (confirm(confirmMsg)) {
+      // TODO: Redirect to real Stripe Checkout (requires backend)
+      // For now, show in-app upgrade modal
+      window.location.href = 'app.html?upgrade=pro';
+    }
+  };
+
+  window.upgradeToBusiness = function() {
+    window.location.href = 'mailto:support@bookflow.app?subject=ترقية لـ Business';
+  };
 
 });

@@ -24,7 +24,9 @@ export const CONFIG = {
 
   // Stripe: https://dashboard.stripe.com/
   STRIPE: {
-    PUBLIC_KEY: 'pk_test_...',
-    CURRENCY: 'egp'
+    PUBLIC_KEY: 'pk_test_YOUR_TEST_KEY',
+    TEST_KEY: 'test_123456',
+    PRICE_PRO_EGP: 'price_99egp_monthly',
+    PRICE_BUSINESS_EGP: 'price_299egp_monthly'
   }
 };
