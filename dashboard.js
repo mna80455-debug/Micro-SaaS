@@ -1031,19 +1031,22 @@ async function loadStats() {
       const topClients = Object.values(clientBookings).sort((a, b) => b.count - a.count).slice(0, 5);
       const topContainer = document.getElementById('topClientsList');
 
-      if(topClients.length === 0) {
-        topContainer.innerHTML = '<p style="color: var(--text-secondary);">لا توجد بيانات بعد</p>';
-      } else {
-        topContainer.innerHTML = topClients.map((c, i) => `
-          <div class="client-card" style="cursor: default;">
-            <div style="font-weight: 700; width: 24px;">${i + 1}</div>
-            <div class="client-avatar">${c.name.charAt(0).toUpperCase()}</div>
-            <div class="client-info">
-              <span class="client-name">${c.name}</span>
-              <span class="client-phone">${c.count} حجز، ${c.spent} ج.م</span>
-            </div>
-          </div>
-        `).join('');
+      if(topContainer) {
+        if(topClients.length === 0) {
+          topContainer.innerHTML = '<p style="color: var(--text-secondary);">لا توجد بيانات بعد</p>';
+        } else {
+          let html = '';
+          topClients.forEach((c, i) => {
+            html += '<div class="client-card" style="cursor: default;">';
+            html += '<div style="font-weight: 700; width: 24px;">' + (i + 1) + '</div>';
+            html += '<div class="client-avatar">' + c.name.charAt(0).toUpperCase() + '</div>';
+            html += '<div class="client-info">';
+            html += '<span class="client-name">' + c.name + '</span>';
+            html += '<span class="client-phone">' + c.count + ' حجز، ' + c.spent + ' ج.م</span>';
+            html += '</div></div>';
+          });
+          topContainer.innerHTML = html;
+        }
       }
 
     } catch(e) {
