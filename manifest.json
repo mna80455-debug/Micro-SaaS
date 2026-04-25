@@ -1,18 +1,35 @@
 {
-  "name": "BookFlow إدارة المواعيد",
+  "name": "BookFlow - إدارة المواعيد",
   "short_name": "BookFlow",
   "description": "نظام ذكي لإدارة المواعيد والعملاء مدعوم بالذكاء الاصطناعي.",
   "start_url": "/app.html",
   "display": "standalone",
-  "background_color": "#0A0B0F",
-  "theme_color": "#0066FF",
-  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#10B981",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "ar",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "لوحة التحكم",
+      "short_name": "Dashboard",
+      "url": "/app.html",
+      "description": "افتح لوحة التحكم"
+    },
+    {
+      "name": "حجز جديد",
+      "short_name": "Book",
+      "url": "/booking.html",
+      "description": "احجز موعد جديد"
     }
   ]
 }

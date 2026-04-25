@@ -21,6 +21,72 @@ const connectGcal = async () => { const m = await getGcal(); return m.connectGca
 const addEventToGcal = async (d) => { const m = await getGcal(); return m.addEventToGcal?.(d); };
 
 document.addEventListener('DOMContentLoaded', initI18n);
+document.addEventListener('DOMContentLoaded', () => {
+  // Request notification permission
+  import('./notifications.js').then(({ requestNotificationPermission }) => {
+    requestNotificationPermission();
+  });
+});
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('globalSearch');
+  if (!searchInput) return;
+  
+  searchInput.addEventListener('input', async (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    if (query.length < 2) return;
+    
+    const results = [];
+    const appointmentsSnapshot = await getDocs(query(collection(db, 'appointments')));
+    appointmentsSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.clientName?.toLowerCase().includes(query) || 
+          data.notes?.toLowerCase().includes(query)) {
+        results.push({ type: 'appointment', ...data, id: doc.id });
+      }
+    });
+    
+    const clientsSnapshot = await getDocs(query(collection(db, 'clients')));
+    clientsSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.name?.toLowerCase().includes(query) || 
+          data.phone?.includes(query)) {
+        results.push({ type: 'client', ...data, id: doc.id });
+      }
+    });
+    
+    showSearchResults(results.slice(0, 10));
+  });
+  
+  function showSearchResults(results) {
+    let popup = document.getElementById('searchResultsPopup');
+    if (!popup) {
+      popup = document.createElement('div');
+      popup.id = 'searchResultsPopup';
+      popup.className = 'search-results-popup';
+      searchInput.parentElement.appendChild(popup);
+    }
+    
+    if (results.length === 0) {
+      popup.innerHTML = '<div class="no-results">لا توجد نتائج</div>';
+    } else {
+      popup.innerHTML = results.map(r => `
+        <div class="search-result-item" onclick="${r.type === 'appointment' ? 'viewAppointment' : 'viewClient'}('${r.id}')">
+          <i class="ph-bold ${r.type === 'appointment' ? 'ph-calendar' : 'ph-user'}"></i>
+          <div>
+            <strong>${r.clientName || r.name}</strong>
+            <small>${r.type === 'appointment' ? r.date : r.phone}</small>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+  
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-box')) {
+      document.getElementById('searchResultsPopup')?.remove();
+    }
+  });
+});
 
 // Elements
 const btnSaveAppointment = document.getElementById('btnSaveAppointment');
@@ -33,6 +99,18 @@ function setupRouting() {
   
   // Use event delegation on the document or sidebar
   document.addEventListener('click', (e) => {
+    // Theme toggle
+    if (e.target.closest('#themeToggle')) {
+      e.preventDefault();
+      const isDark = document.documentElement.classList.toggle('dark-theme');
+      localStorage.setItem('bookflow_theme', isDark ? 'dark' : 'light');
+      const icon = e.target.closest('#themeToggle').querySelector('i');
+      if (icon) {
+        icon.className = isDark ? 'ph-bold ph-sun' : 'ph-bold ph-moon';
+      }
+      return;
+    }
+    
     const navItem = e.target.closest('.nav-item[data-page]');
     if (!navItem) return;
 
@@ -1047,5 +1125,94 @@ window.notifyClientViaWA = async function(aptId) {
   } catch(e) {
     console.error(e);
     showToast('خطأ في إرسال الإشعار', 'error');
+  }
+};
+
+// ==================== EXPORT FUNCTIONS ====================
+window.exportToExcel = async function() {
+  try {
+    const wb = { sheets: {} };
+    const appointmentsSheet = [];
+    const clientsSheet = [];
+    const servicesSheet = [];
+    
+    const aptSnap = await getDocs(query(collection(db, 'appointments'), orderBy('date', 'desc')));
+    aptSnap.forEach(d => appointmentsSheet.push(d.data()));
+    
+    const cliSnap = await getDocs(query(collection(db, 'clients')));
+    cliSnap.forEach(d => clientsSheet.push(d.data()));
+    
+    const srvSnap = await getDocs(query(collection(db, 'services')));
+    srvSnap.forEach(d => servicesSheet.push(d.data()));
+    
+    // Build CSV content
+    let csv = 'الاسم,التاريخ,الوقت,الحالة,السعر,ملاحظات\n';
+    appointmentsSheet.forEach(a => {
+      csv += `"${a.clientName||''}","${a.date||''}","${a.time||''}","${a.status||''}","${a.price||0}","${a.notes||''}"\n`;
+    });
+    
+    // Add clients sheet
+    csv += '\n---Clients---\nالاسم,الهاتف,ملاحظات\n';
+    clientsSheet.forEach(c => {
+      csv += `"${c.name||''}","${c.phone||''}","${c.notes||''}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `bookflow_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    showToast('تم تصدير البيانات', 'success');
+  } catch(e) {
+    showToast('خطأ في التصدير', 'error');
+  }
+};
+
+window.exportToPDF = async function() {
+  try {
+    const appointments = [];
+    const aptSnap = await getDocs(query(collection(db, 'appointments'), orderBy('date', 'desc'), limit(50)));
+    aptSnap.forEach(d => appointments.push(d.data()));
+    
+    const content = `
+      <html>
+      <head>
+        <style>
+          body { font-family: Cairo, sans-serif; padding: 40px; }
+          h1 { color: #0066FF; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
+          th { background: #0066FF; color: white; }
+          tr:nth-child(even) { background: #f9f9f9; }
+        </style>
+      </head>
+      <body>
+        <h1>تقرير BookFlow</h1>
+        <p>تاريخ التصدير: ${new Date().toLocaleDateString('ar')}</p>
+        <table>
+          <tr><th>العميل</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th><th>السعر</th></tr>
+          ${appointments.map(a => `
+            <tr>
+              <td>${a.clientName || '-'}</td>
+              <td>${a.date || '-'}</td>
+              <td>${a.time || '-'}</td>
+              <td>${a.status || '-'}</td>
+              <td>${a.price || 0}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </body>
+      </html>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(content);
+    printWindow.document.close();
+    printWindow.print();
+    
+    showToast('تم إنشاء التقرير', 'success');
+  } catch(e) {
+    showToast('خطأ في إنشاء التقرير', 'error');
   }
 };

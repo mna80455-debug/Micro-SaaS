@@ -2,6 +2,43 @@ import { CONFIG } from './config.js';
 
 export const NOTIFICATION_TEMPLATES = CONFIG.EMAILJS.TEMPLATES;
 
+// ==================== BROWSER NOTIFICATIONS ====================
+export async function requestNotificationPermission() {
+  if (!('Notification' in window)) return false;
+  
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  
+  const permission = await Notification.requestPermission();
+  return permission === 'granted';
+}
+
+export function showBrowserNotification(title, options = {}) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  
+  new Notification(title, {
+    icon: '/icon.svg',
+    badge: '/icon.svg',
+    vibrate: [200, 100, 200],
+    ...options
+  });
+}
+
+export function scheduleAppointmentReminder(appointment, minutesBefore = 60) {
+  const aptTime = new Date(`${appointment.date}T${appointment.time}`).getTime();
+  const reminderTime = aptTime - (minutesBefore * 60 * 1000);
+  const now = Date.now();
+  
+  if (reminderTime > now) {
+    setTimeout(() => {
+      showBrowserNotification('تذكير بموعد قادم', {
+        body: `موعد ${appointment.clientName} في ${appointment.service} خلال ساعة`,
+        tag: appointment.id
+      });
+    }, reminderTime - now);
+  }
+}
+
 /**
  * Sends an email using EmailJS
  * @param {string} templateId - The EmailJS template ID

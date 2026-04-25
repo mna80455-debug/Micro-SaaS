@@ -190,6 +190,7 @@
   justify-content: space-between;
   align-items: flex-end;
   margin-bottom: 32px;
+  gap: 20px;
 }
 
 .dashboard-greeting h1 {
@@ -199,6 +200,84 @@
 
 .dashboard-greeting p {
   color: var(--text-secondary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 10px 18px;
+}
+
+.search-box i {
+  color: var(--text-muted);
+  margin-inline-end: 8px;
+}
+
+.search-box input {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  outline: none;
+  font-size: 0.95rem;
+  width: 180px;
+}
+
+.search-results-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.search-result-item:hover {
+  background: var(--bg-elevated);
+}
+
+.search-result-item i {
+  color: var(--teal);
+}
+
+.search-result-item strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.search-result-item small {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.no-results {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
 }
 
 .btn-new-appointment {

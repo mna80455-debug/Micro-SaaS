@@ -102,11 +102,15 @@
         </a>
       </nav>
 
-      <div class="sidebar-bottom">
-        <a class="nav-item" data-page="settings">
-          <i class="ph-bold ph-gear nav-icon"></i>
-          <span class="nav-label">الإعدادات</span>
-        </a>
+<div class="sidebar-bottom">
+          <a class="nav-item" id="themeToggle">
+            <i class="ph-bold ph-moon nav-icon"></i>
+            <span class="nav-label">الوضع الداكن</span>
+          </a>
+          <a class="nav-item" data-page="settings">
+            <i class="ph-bold ph-gear nav-icon"></i>
+            <span class="nav-label">الإعدادات</span>
+          </a>
         <div class="sidebar-user" id="sidebarUserBtn">
           <div class="user-avatar" id="sidebarAvatar">م</div>
           <div class="user-info">
@@ -127,9 +131,15 @@
             <h1 id="greetingText">صباح الخير 👋</h1>
             <p id="greetingDate">...</p>
           </div>
-          <button class="btn-new-appointment" onclick="window.openNewAppointmentModal()">
-            <i class="ph-bold ph-plus"></i> حجز جديد
-          </button>
+          <div class="header-actions">
+            <div class="search-box">
+              <i class="ph-bold ph-magnifying-glass"></i>
+              <input type="text" id="globalSearch" placeholder="بحث..." />
+            </div>
+            <button class="btn-new-appointment" onclick="window.openNewAppointmentModal()">
+              <i class="ph-bold ph-plus"></i> حجز جديد
+            </button>
+          </div>
         </div>
 
         <div class="stats-grid">
@@ -415,6 +425,18 @@
             <button class="btn-secondary text-teal border-teal" id="btnVerifyEmail" onclick="window.checkAndSendVerification()">
               <i class="ph-bold ph-envelope"></i> تفعيل الإيميل
             </button>
+          </div>
+
+          <div class="dashboard-section">
+            <h3>📤 تصدير البيانات</h3>
+            <div class="d-flex gap-3 mt-16">
+              <button class="btn-secondary" onclick="window.exportToExcel()">
+                <i class="ph-bold ph-file-xls"></i> تصدير Excel
+              </button>
+              <button class="btn-secondary" onclick="window.exportToPDF()">
+                <i class="ph-bold ph-file-pdf"></i> تصدير PDF
+              </button>
+            </div>
           </div>
 
           <div class="bg-surface p-24 radius-sm border">
