@@ -8,6 +8,12 @@ import {
 import { showToast } from './components/toast.js';
 import { initI18n } from './i18n.js';
 import { openWhatsAppNotify, scheduleAppointmentReminder, sendEmailNotification } from './notifications.js';
+
+// Debug helper
+window.dbg = function(msg, data) {
+  console.log('[BookFlow Debug]', msg, data);
+};
+
 // gcal loaded lazily to avoid breaking the module if gapi/google aren't ready
 let _gcal = null;
 async function getGcal() {
@@ -20,7 +26,21 @@ const initGcal = async () => { const m = await getGcal(); return m.initGcal?.();
 const connectGcal = async () => { const m = await getGcal(); return m.connectGcal?.(); };
 const addEventToGcal = async (d) => { const m = await getGcal(); return m.addEventToGcal?.(d); };
 
-document.addEventListener('DOMContentLoaded', initI18n);
+document.addEventListener('DOMContentLoaded', () => {
+  window.dbg('Dashboard loading...');
+  initI18n();
+  setupThemeToggle();
+  setupLangToggle();
+  
+  // Request notification permission
+  import('./notifications.js').then(({ requestNotificationPermission }) => {
+    requestNotificationPermission();
+  }).catch(e => console.warn('Notification error:', e));
+});
+
+// Wait for auth
+let authReady = false;
+window.addEventListener('authReady', () => { authReady = true; });
 
 // Theme toggle - settings button only
 function setupThemeToggle() {
@@ -32,7 +52,6 @@ function setupThemeToggle() {
     const isDarkNow = document.documentElement.classList.toggle('dark-theme');
     localStorage.setItem('bookflow_theme', isDarkNow ? 'dark' : 'light');
     
-    // Update settings button icon
     if (btnToggleTheme) {
       btnToggleTheme.innerHTML = isDarkNow ? '<i class="ph-bold ph-sun"></i> الوضع الفاتح' : '<i class="ph-bold ph-moon"></i> الوضع الداكن';
     }
@@ -40,7 +59,6 @@ function setupThemeToggle() {
   
   btnToggleTheme?.addEventListener('click', toggleTheme);
   
-  // Apply saved theme on load
   if (isDark) {
     document.documentElement.classList.add('dark-theme');
     if (btnToggleTheme) btnToggleTheme.innerHTML = '<i class="ph-bold ph-sun"></i> الوضع الفاتح';
@@ -55,7 +73,7 @@ function setupLangToggle() {
     const currentLang = localStorage.getItem('bookflow_lang') || 'ar';
     const newLang = currentLang === 'ar' ? 'en' : 'ar';
     localStorage.setItem('bookflow_lang', newLang);
-    location.reload(); // Reload to apply translation to all pages
+    window.location.reload();
   }
   
   langBtn?.addEventListener('click', toggleLang);
@@ -63,14 +81,16 @@ function setupLangToggle() {
 
 // Initialize routing and theming
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('[BookFlow] Dashboard loading...');
   setupThemeToggle();
   setupLangToggle();
   initI18n();
+  setupRouting();
   
   // Request notification permission
   import('./notifications.js').then(({ requestNotificationPermission }) => {
     requestNotificationPermission();
-  });
+  }).catch(e => console.warn('Notification error:', e));
 });
 
 // Setup Routing Logic with Event Delegation
