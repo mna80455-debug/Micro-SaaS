@@ -1,5 +1,5 @@
 // landing.js — Premium Landing Page Interactions
-import { CONFIG } from './config.js';
+// Note: CONFIG is set globally via config.js
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -239,8 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const confirmMsg = 'سيتم توجيهك لصفحة الدفع Stripe لإتمام الاشتراك!\nالسعر: 99 ج.م/شهر';
     if (confirm(confirmMsg)) {
-      // TODO: Redirect to real Stripe Checkout (requires backend)
-      // For now, show in-app upgrade modal
       window.location.href = 'app.html?upgrade=pro';
     }
   };
