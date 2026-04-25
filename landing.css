@@ -370,7 +370,6 @@ nav.nav-links a:hover::after {
   color: var(--text-primary);
 }
 
-/* Hero Mockup */
 .hero-mockup {
   position: relative;
   z-index: 1;
@@ -382,19 +381,20 @@ nav.nav-links a:hover::after {
   transform: scale(0.9) translateY(30px);
 }
 
-@keyframes mockupScaleIn {
-  0% { opacity: 0; transform: scale(0.9) translateY(30px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
-}
-
 .mockup-window {
   background: var(--bg-surface);
   border-radius: 16px;
   border: 1px solid var(--border);
   box-shadow: 
-    0 20px 60px rgba(0,0,0,0.08),
-    0 0 0 1px rgba(0,0,0,0.04);
+    0 20px 60px rgba(0,0,0,0.12),
+    0 0 0 1px rgba(0,0,0,0.04),
+    0 0 100px var(--teal-dim);
   overflow: hidden;
+}
+
+@keyframes mockupScaleIn {
+  0% { opacity: 0; transform: scale(0.9) translateY(30px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .mockup-header {
@@ -435,80 +435,174 @@ nav.nav-links a:hover::after {
 
 .mockup-body {
   display: flex;
-  height: 300px;
+  height: 380px;
+  background: var(--bg-elevated);
 }
 
 .mockup-sidebar {
-  width: 60px;
-  background: var(--bg-elevated);
-  border-left: 1px solid var(--border);
+  width: 64px;
+  background: var(--bg-void);
+  border-right: 1px solid var(--border);
   padding: 16px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  align-items: center;
 }
 
 .mockup-nav-item {
+  width: 32px;
   height: 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   background: var(--border);
 }
 
 .mockup-nav-item.active {
   background: var(--teal);
+  box-shadow: 0 0 12px var(--teal-dim);
 }
 
 .mockup-content {
   flex: 1;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
+
+.mockup-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mockup-header-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mockup-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), #8B5CF6);
+}
+
+.mockup-avatar.sm {
+  width: 28px;
+  height: 28px;
+}
+
+.mockup-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mockup-line {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+}
+
+.mockup-line.short { width: 80px; }
+.mockup-line.shorter { width: 50px; }
+.mockup-line.small { width: 60px; }
+.mockup-line.tiny { width: 40px; }
+.mockup-line.medium { width: 120px; }
 
 .mockup-stat-row {
   display: flex;
   gap: 12px;
 }
 
-.mockup-stat {
+.mockup-stat-card {
   flex: 1;
-  height: 60px;
-  border-radius: 10px;
-  animation: shimmer 2s ease-in-out infinite alternate;
-}
-
-.mockup-stat.blue { background: linear-gradient(135deg, rgba(0,102,255,0.1), rgba(0,102,255,0.05)); }
-.mockup-stat.green { background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.05)); }
-.mockup-stat.amber { background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.05)); }
-
-@keyframes shimmer {
-  0% { opacity: 0.6; }
-  100% { opacity: 1; }
-}
-
-.mockup-chart {
-  flex: 1;
-  background: linear-gradient(135deg, var(--bg-elevated), var(--bg-surface));
-  border-radius: 10px;
+  height: 70px;
+  background: var(--bg-surface);
+  border-radius: 12px;
   border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.mockup-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.mockup-stat-icon.blue { background: rgba(0,102,255,0.1); }
+.mockup-stat-icon.green { background: rgba(16,185,129,0.1); }
+.mockup-stat-icon.amber { background: rgba(245,158,11,0.1); }
+
+.mockup-stat-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mockup-chart-area {
+  flex: 1;
+  background: var(--bg-surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mockup-chart-title {
+  width: 100px;
+  height: 10px;
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.mockup-bars {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.mockup-bar {
+  flex: 1;
+  background: linear-gradient(to top, var(--teal), #8B5CF6);
+  border-radius: 4px;
+  opacity: 0.8;
+  animation: barGrow 1.5s ease-out forwards;
+}
+
+@keyframes barGrow {
+  0% { transform: scaleY(0); }
+  100% { transform: scaleY(1); }
 }
 
 .mockup-list {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .mockup-list-item {
-  height: 12px;
-  border-radius: 6px;
-  background: var(--bg-elevated);
+  flex: 1;
+  height: 36px;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
 }
-
-.mockup-list-item:nth-child(1) { width: 92%; }
-.mockup-list-item:nth-child(2) { width: 78%; }
-.mockup-list-item:nth-child(3) { width: 65%; }
 
 /* --- TRUST STRIP --- */
 .trust-strip {
