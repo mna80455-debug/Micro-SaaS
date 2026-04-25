@@ -375,12 +375,21 @@ async function loadClients() {
 
     const clients = snap.docs.map(d => ({id: d.id, ...d.data()}));
     
+    // Add loyalty badges
+    const getBadge = (visits) => {
+      if (visits >= 20) return '<span class="badge-vip">💎 VIP</span>';
+      if (visits >= 10) return '<span class="badge-gold">🥇 ذهبي</span>';
+      if (visits >= 5) return '<span class="badge-silver">🥈 فضي</span>';
+      return '';
+    };
+    
     container.innerHTML = clients.map((client, index) => `
       <div class="client-card fade-up stagger-${(index % 10) + 1}" onclick="window.openEditClientModal('${client.id}')">
         <div class="client-avatar">${client.name.charAt(0).toUpperCase()}</div>
         <div class="client-info">
           <span class="client-name">${client.name}</span>
           <span class="client-phone">${client.phone || '—'}</span>
+          ${getBadge(client.totalVisits || 0)}
         </div>
         <div class="client-stats">
           <span class="client-visits">${client.totalVisits || 1} زيارة</span>

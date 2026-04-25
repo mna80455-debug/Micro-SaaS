@@ -886,10 +886,33 @@
 }
 
 .client-phone {
-  display: block;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Loyalty Badges */
+.badge-vip, .badge-gold, .badge-silver {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.badge-vip {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+}
+
+.badge-gold {
+  background: linear-gradient(135deg, #FFD700, #DAA520);
+  color: #000;
+}
+
+.badge-silver {
+  background: linear-gradient(135deg, #C0C0C0, #808080);
+  color: #fff;
 }
 
 .client-stats {
