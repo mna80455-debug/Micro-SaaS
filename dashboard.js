@@ -1044,14 +1044,15 @@ async function loadStats() {
           }
         });
 
-        const legendEl = document.getElementById('statusLegend');
+const legendEl = document.getElementById('statusLegend');
         if (legendEl) {
-          legendEl.innerHTML = `
-            <div class="stat-row"><span class="dot green"></span> مكتمل: ${statusCounts.completed}</div>
-            <div class="stat-row"><span class="dot amber"></span> مؤكد: ${statusCounts.pending}</div>
-            <div class="stat-row"><span class="dot danger"></span> ملغى: ${statusCounts.cancelled}</div>
-          `;
+          let legendHtml = '';
+          legendHtml += '<div class="stat-row"><span class="dot green"></span> مكتمل: ' + statusCounts.completed + '</div>';
+          legendHtml += '<div class="stat-row"><span class="dot amber"></span> معين: ' + statusCounts.pending + '</div>';
+          legendHtml += '<div class="stat-row"><span class="dot danger"></span> ملغى: ' + statusCounts.cancelled + '</div>';
+          legendEl.innerHTML = legendHtml;
         }
+      }
       }
 
       // Top clients
