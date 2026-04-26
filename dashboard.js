@@ -2,7 +2,7 @@
 import { db } from './firebase-config.js';
 import { 
   collection, query, where, getDocs, addDoc, 
-  updateDoc, doc, getDoc, orderBy, increment,
+  updateDoc, doc, getDoc, orderBy, increment, limit,
   deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -16,6 +16,17 @@ const auth = getAuth();
 window.dbg = function(msg, data) {
   console.log('[BookFlow]', msg, data);
 };
+
+// Basic HTML escaping for user-provided content injected into the DOM
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 window.dbg('Starting...');
 
@@ -63,16 +74,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Setup Routing Logic with Event Delegation
 function setupRouting() {
-  console.log("BookFlow: Setting up routing...");
+  console.log("[BookFlow] Initializing routing...");
   
-  // Use event delegation on the document or sidebar
   document.addEventListener('click', (e) => {
     const navItem = e.target.closest('.nav-item[data-page]');
     if (!navItem) return;
 
+    const page = navItem.getAttribute('data-page');
+    const pageId = page + 'View';
+    console.log("[BookFlow] Navigating to:", pageId);
+    
     e.preventDefault();
-    const pageId = navItem.getAttribute('data-page') + 'View';
-    console.log("BookFlow: Navigating to", pageId);
     
     // Update active classes
     document.querySelectorAll('.nav-item[data-page]').forEach(n => n.classList.remove('active'));
@@ -80,17 +92,22 @@ function setupRouting() {
     
     navItem.classList.add('active');
     const targetView = document.getElementById(pageId);
+    
     if (targetView) {
       targetView.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       
       // Load specific data
-      if(pageId === 'calendarView') window.renderCalendar();
+      if(pageId === 'calendarView') {
+        if(window.renderCalendar) window.renderCalendar();
+        else console.warn("[BookFlow] renderCalendar not found");
+      }
       if(pageId === 'clientsView') loadClients();
       if(pageId === 'servicesView') loadServices();
       if(pageId === 'statsView') loadStats();
       if(pageId === 'settingsView') loadWorkHours();
     } else {
-      console.warn("BookFlow: View not found:", pageId);
+      console.error("[BookFlow] View not found:", pageId);
     }
   });
 }
@@ -275,28 +292,28 @@ async function loadTodayTimeline(userId) {
       'cancelled': '#EF4444'
     };
 
-    tl.innerHTML = apts.map((apt, index) => `
+  tl.innerHTML = apts.map((apt, index) => `
       <div class="timeline-item fade-in-right stagger-${(index % 10) + 1}" onclick="window.openAptDetails('${apt.id}')" style="cursor: pointer;">
-        <div class="timeline-time">${apt.time}</div>
-        <div class="timeline-dot" style="background:${statusColors[apt.status] || 'var(--teal)'}; box-shadow: 0 0 8px ${statusColors[apt.status]}55"></div>
+        <div class="timeline-time">${escapeHTML(apt.time)}</div>
+        <div class="timeline-dot" style="background:${escapeHTML(statusColors[apt.status] || 'var(--teal)')}; box-shadow: 0 0 8px ${escapeHTML(statusColors[apt.status] || 'var(--teal)')}55"></div>
         <div class="timeline-content">
-          <div class="timeline-client">${apt.clientName}</div>
-          <div class="timeline-service">${apt.service}</div>
+          <div class="timeline-client">${escapeHTML(apt.clientName)}</div>
+          <div class="timeline-service">${escapeHTML(apt.service)}</div>
         </div>
         <div class="timeline-right" style="display: flex; gap: 8px; flex-direction: row; align-items: center;">
           <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-            <span class="status-chip" style="color:${statusColors[apt.status]}; background:${statusColors[apt.status]}22">
-              ${statusLabels[apt.status]}
+            <span class="status-chip" style="color:${escapeHTML(statusColors[apt.status] || '#000')}; background:${escapeHTML(statusColors[apt.status] || '#000')}22">
+              ${escapeHTML(statusLabels[apt.status] || '')}
             </span>
-            <span class="timeline-price">${apt.price || 0} ج.م</span>
+            <span class="timeline-price">${escapeHTML(apt.price || 0)} ج.م</span>
           </div>
           ${apt.status !== 'completed' && apt.status !== 'cancelled' ? `
             <div style="display: flex; flex-direction: column; gap: 4px; margin-right: 12px;">
-              ${apt.clientPhone ? `<button title="واتساب" onclick="event.stopPropagation(); window.openWhatsApp('${apt.clientPhone}', '${apt.clientName}')" style="background: rgba(37,211,102,0.1); border: 1px solid rgba(37,211,102,0.25); border-radius: 4px; padding: 4px; color: #25D366;"><i class="ph-fill ph-whatsapp-logo"></i></button>` : ''}
-              ${apt.clientPhone ? `<button title="إرسال تأكيد" onclick="event.stopPropagation(); window.notifyClientViaWA('${apt.id}')" style="background: rgba(0,102,255,0.1); border: 1px solid rgba(0,102,255,0.25); border-radius: 4px; padding: 4px; color: var(--primary);"><i class="ph-bold ph-paper-plane-tilt"></i></button>` : ''}
-              ${apt.status === 'awaiting_payment' ? `<button title="تأكيد الدفع" onclick="event.stopPropagation(); window.updateAptStatus('${apt.id}', 'confirmed')" style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 4px; padding: 4px; color: #10B981;"><i class="ph-bold ph-money"></i></button>` : ''}
-              <button title="اكتمل" onclick="event.stopPropagation(); window.updateAptStatus('${apt.id}', 'completed')" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; padding: 4px; color: var(--completed);"><i class="ph-bold ph-check"></i></button>
-              <button title="إلغاء" onclick="event.stopPropagation(); window.updateAptStatus('${apt.id}', 'cancelled')" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; padding: 4px; color: var(--cancelled);"><i class="ph-bold ph-x"></i></button>
+              ${apt.clientPhone ? `<button title="واتساب" onclick="event.stopPropagation(); window.openWhatsApp('${escapeHTML(apt.clientPhone)}', '${escapeHTML(apt.clientName)}')" style="background: rgba(37,211,102,0.1); border: 1px solid rgba(37,211,102,0.25); border-radius: 4px; padding: 4px; color: #25D366;"><i class="ph-fill ph-whatsapp-logo"></i></button>` : ''}
+              ${apt.clientPhone ? `<button title="إرسال تأكيد" onclick="event.stopPropagation(); window.notifyClientViaWA('${escapeHTML(apt.id)}')" style="background: rgba(0,102,255,0.1); border: 1px solid rgba(0,102,255,0.25); border-radius: 4px; padding: 4px; color: var(--primary);"><i class="ph-bold ph-paper-plane-tilt"></i></button>` : ''}
+              ${apt.status === 'awaiting_payment' ? `<button title="تأكيد الدفع" onclick="event.stopPropagation(); window.updateAptStatus('${escapeHTML(apt.id)}', 'confirmed')" style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 4px; padding: 4px; color: #10B981;"><i class="ph-bold ph-money"></i></button>` : ''}
+              <button title="اكتمل" onclick="event.stopPropagation(); window.updateAptStatus('${escapeHTML(apt.id)}', 'completed')" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; padding: 4px; color: var(--completed);"><i class="ph-bold ph-check"></i></button>
+              <button title="إلغاء" onclick="event.stopPropagation(); window.updateAptStatus('${escapeHTML(apt.id)}', 'cancelled')" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; padding: 4px; color: var(--cancelled);"><i class="ph-bold ph-x"></i></button>
             </div>
           ` : ''}
         </div>
@@ -452,19 +469,19 @@ async function loadClients() {
     
     container.innerHTML = clients.map((client, index) => `
       <div class="client-card fade-up stagger-${(index % 10) + 1}" onclick="window.openEditClientModal('${client.id}')">
-        <div class="client-avatar">${client.name.charAt(0).toUpperCase()}</div>
+        <div class="client-avatar">${escapeHTML(client.name.charAt(0).toUpperCase())}</div>
         <div class="client-info">
-          <span class="client-name">${client.name}</span>
-          <span class="client-phone">${client.phone || '—'}</span>
+          <span class="client-name">${escapeHTML(client.name)}</span>
+          <span class="client-phone">${escapeHTML(client.phone || '—')}</span>
           ${getBadge(client.totalVisits || 0)}
           ${getCategoryBadge(client.category)}
-          ${(client.tags || []).length ? `<div class="client-tags">${client.tags.slice(0,3).map(t => `<span class="tag-chip">${t}</span>`).join('')}</div>` : ''}
+          ${(client.tags || []).length ? `<div class="client-tags">${client.tags.slice(0,3).map(t => `<span class="tag-chip">${escapeHTML(t)}</span>`).join('')}</div>` : ''}
         </div>
         <div class="client-stats">
-          <span class="client-visits">${client.totalVisits || 1} زيارة</span>
+          <span class="client-visits">${escapeHTML(String(client.totalVisits || 1))} زيارة</span>
         </div>
         <div class="client-actions" style="display: flex; gap: 8px; align-items: center;">
-          ${client.phone ? `<button class="btn-whatsapp-quick" onclick="event.stopPropagation(); window.openWhatsApp('${client.phone}', '${client.name}')"><i class="ph-fill ph-whatsapp-logo"></i> واتساب</button>` : ''}
+          ${client.phone ? `<button class="btn-whatsapp-quick" onclick="event.stopPropagation(); window.openWhatsApp('${escapeHTML(client.phone)}', '${escapeHTML(client.name)}')"><i class="ph-fill ph-whatsapp-logo"></i> واتساب</button>` : ''}
           <button class="btn-quick-book" onclick="event.stopPropagation(); window.openNewAppointmentModal()">+ حجز</button>
         </div>
       </div>
@@ -737,26 +754,21 @@ btnSaveAppointment?.addEventListener('click', async () => {
   }
 });
 
-// Settings Save
-btnSaveSettings?.addEventListener('click', async () => {
-  const name = document.getElementById('settingName').value;
-  const business = document.getElementById('settingBusiness').value;
-  const link = document.getElementById('bookingUsername').value.trim();
-
-  btnSaveSettings.classList.add('btn-loading');
-
+// Global Search Logic
+document.getElementById('globalSearch')?.addEventListener('input', async (e) => {
+  const queryText = e.target.value.trim().toLowerCase();
+  if (queryText.length < 2) return;
+  
   try {
-    await updateDoc(doc(db, 'users', window.currentUser.uid), {
-      'profile.name': name,
-      'profile.businessName': business,
-      'settings.bookingLink': link
-    });
-    showToast('تم حفظ الإعدادات', 'success');
-    document.getElementById('sidebarName').textContent = name;
-  } catch (err) {
-    showToast('خطأ في الحفظ', 'error');
-  } finally {
-    btnSaveSettings.classList.remove('btn-loading');
+    const aptSnap = await getDocs(query(collection(db, 'appointments'), limit(20)));
+    const results = aptSnap.docs
+      .map(d => ({id: d.id, ...d.data()}))
+      .filter(a => a.clientName?.toLowerCase().includes(queryText));
+    
+    console.log('Search Results:', results);
+    // You can implement a UI dropdown here to show these results
+  } catch(err) {
+    console.error('Search error:', err);
   }
 });
 
@@ -841,12 +853,12 @@ async function loadServices() {
           <div class="service-card" onclick="window.openEditServiceModal('${s.id}')" style="cursor: pointer;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <div class="service-name" style="font-weight: 600; font-size: 1.1rem; margin-bottom: 4px;">${s.name}</div>
-                <div style="color: var(--text-secondary); font-size: 0.9rem;">${s.duration || 30} دقيقة</div>
+                <div class="service-name" style="font-weight: 600; font-size: 1.1rem; margin-bottom: 4px;">${escapeHTML(s.name)}</div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem;">${escapeHTML(s.duration || 30)} دقيقة</div>
               </div>
-              <div style="font-weight: 700; font-size: 1.25rem; color: var(--teal);">${s.price || 0} <span style="font-size: 0.8rem;">ج.م</span></div>
+              <div style="font-weight: 700; font-size: 1.25rem; color: var(--teal);">${escapeHTML(s.price || 0)} <span style="font-size: 0.8rem;">ج.م</span></div>
             </div>
-            ${s.description ? `<p style="margin-top: 12px; font-size: 0.85rem; color: var(--text-secondary);">${s.description}</p>` : ''}
+            ${s.description ? `<p style="margin-top: 12px; font-size: 0.85rem; color: var(--text-secondary);">${escapeHTML(s.description)}</p>` : ''}
           </div>
         `).join('')}
       </div>
@@ -856,7 +868,7 @@ async function loadServices() {
     const aptServiceSelect = document.getElementById('aptService');
     if(aptServiceSelect) {
       aptServiceSelect.innerHTML = '<option value="">اختر خدمة...</option>' +
-        services.map(s => `<option value="${s.name}" data-price="${s.price}" data-duration="${s.duration}">${s.name} (${s.price} ج.م)</option>`).join('');
+        services.map(s => `<option value="${escapeHTML(s.name)}" data-price="${escapeHTML(s.price)}" data-duration="${escapeHTML(s.duration)}">${escapeHTML(s.name)} (${escapeHTML(s.price)} ج.م)</option>`).join('');
     }
 
   } catch(e) {
@@ -1259,10 +1271,10 @@ const legendEl = document.getElementById('statusLegend');
           topClients.forEach((c, i) => {
             html += '<div class="client-card" style="cursor: default;">';
             html += '<div style="font-weight: 700; width: 24px;">' + (i + 1) + '</div>';
-            html += '<div class="client-avatar">' + c.name.charAt(0).toUpperCase() + '</div>';
+            html += '<div class="client-avatar">' + escapeHTML(c.name.charAt(0).toUpperCase()) + '</div>';
             html += '<div class="client-info">';
-            html += '<span class="client-name">' + c.name + '</span>';
-            html += '<span class="client-phone">' + c.count + ' حجز، ' + c.spent + ' ج.م</span>';
+            html += '<span class="client-name">' + escapeHTML(c.name) + '</span>';
+            html += '<span class="client-phone">' + escapeHTML(String(c.count)) + ' حجز، ' + escapeHTML(String(c.spent)) + ' ج.م</span>';
             html += '</div></div>';
           });
           topContainer.innerHTML = html;
@@ -1359,7 +1371,11 @@ window.initDashboard = async function(user) {
       document.getElementById('sidebarName').textContent = userData.profile.name || 'مستخدم';
       document.getElementById('sidebarPlan').textContent = userData.profile.plan || 'Free';
       document.getElementById('sidebarAvatar').textContent = (userData.profile.name || 'م')[0].toUpperCase();
-      document.getElementById('greetingText').textContent = `صباح الخير، ${userData.profile.name.split(' ')[0]} 👋`;
+      const greetingEl = document.getElementById('greetingText');
+      if (greetingEl) {
+        const firstName = userData.profile.name.split(' ')[0];
+        greetingEl.innerHTML = `<span class="greeting-msg">صباح الخير، ${firstName}</span> <span class="greeting-emoji">👋</span>`;
+      }
       document.getElementById('settingName').value = userData.profile.name || '';
       document.getElementById('settingBusiness').value = userData.profile.businessName || '';
       if(userData.settings?.bookingLink) {
@@ -1433,6 +1449,38 @@ window.handleConnectGcal = async function() {
 
 // ==================== SOCIAL MEDIA & WHATSAPP ====================
 
+// Save Profile
+document.getElementById('btnSaveProfile')?.addEventListener('click', async () => {
+  if(!window.currentUser) return;
+  const name = document.getElementById('settingName').value.trim();
+  const business = document.getElementById('settingBusiness').value.trim();
+  
+  try {
+    await updateDoc(doc(db, 'users', window.currentUser.uid), {
+      'profile.name': name,
+      'profile.businessName': business
+    });
+    showToast('تم حفظ الملف الشخصي بنجاح ✅', 'success');
+  } catch(e) {
+    showToast('خطأ في الحفظ', 'error');
+  }
+});
+
+// Save Booking Link
+document.getElementById('btnSaveLink')?.addEventListener('click', async () => {
+  if(!window.currentUser) return;
+  const link = document.getElementById('bookingUsername').value.trim();
+  
+  try {
+    await updateDoc(doc(db, 'users', window.currentUser.uid), {
+      'settings.bookingLink': link
+    });
+    showToast('تم حفظ رابط الحجز بنجاح ✅', 'success');
+  } catch(e) {
+    showToast('خطأ في الحفظ', 'error');
+  }
+});
+
 // Save Social Settings
 document.getElementById('btnSaveSocial')?.addEventListener('click', async () => {
   if(!window.currentUser) return;
@@ -1503,39 +1551,21 @@ window.notifyClientViaWA = async function(aptId) {
 // ==================== EXPORT FUNCTIONS ====================
 window.exportToExcel = async function() {
   try {
-    const wb = { sheets: {} };
-    const appointmentsSheet = [];
-    const clientsSheet = [];
-    const servicesSheet = [];
-    
     const aptSnap = await getDocs(query(collection(db, 'appointments'), orderBy('date', 'desc')));
-    aptSnap.forEach(d => appointmentsSheet.push(d.data()));
+    const data = aptSnap.docs.map(d => d.data());
     
-    const cliSnap = await getDocs(query(collection(db, 'clients')));
-    cliSnap.forEach(d => clientsSheet.push(d.data()));
-    
-    const srvSnap = await getDocs(query(collection(db, 'services')));
-    srvSnap.forEach(d => servicesSheet.push(d.data()));
-    
-    // Build CSV content
     let csv = 'الاسم,التاريخ,الوقت,الحالة,السعر,ملاحظات\n';
-    appointmentsSheet.forEach(a => {
-      csv += `"${a.clientName||''}","${a.date||''}","${a.time||''}","${a.status||''}","${a.price||0}","${a.notes||''}"\n`;
+    data.forEach(a => {
+      csv += `"${a.clientName||''}","${new Date(a.date).toLocaleDateString('ar')}","${a.time||''}","${a.status||''}","${a.price||0}","${a.notes||''}"\n`;
     });
     
-    // Add clients sheet
-    csv += '\n---Clients---\nالاسم,الهاتف,ملاحظات\n';
-    clientsSheet.forEach(c => {
-      csv += `"${c.name||''}","${c.phone||''}","${c.notes||''}"\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `bookflow_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `BookFlow_Export_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     
-    showToast('تم تصدير البيانات', 'success');
+    showToast('تم تصدير البيانات بنجاح ✅', 'success');
   } catch(e) {
     showToast('خطأ في التصدير', 'error');
   }
@@ -1543,47 +1573,55 @@ window.exportToExcel = async function() {
 
 window.exportToPDF = async function() {
   try {
-    const appointments = [];
     const aptSnap = await getDocs(query(collection(db, 'appointments'), orderBy('date', 'desc'), limit(50)));
-    aptSnap.forEach(d => appointments.push(d.data()));
+    const appointments = aptSnap.docs.map(d => d.data());
     
-    const content = `
-      <html>
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html dir="rtl">
       <head>
+        <title>تقرير BookFlow</title>
+        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
         <style>
-          body { font-family: Cairo, sans-serif; padding: 40px; }
-          h1 { color: #0066FF; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
-          th { background: #0066FF; color: white; }
-          tr:nth-child(even) { background: #f9f9f9; }
+          body { font-family: 'Cairo', sans-serif; padding: 40px; color: #333; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #6366f1; padding-bottom: 20px; margin-bottom: 30px; }
+          h1 { color: #6366f1; margin: 0; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #eee; padding: 12px; text-align: right; }
+          th { background: #f8fafc; color: #6366f1; font-weight: 700; }
+          tr:nth-child(even) { background: #fcfcfc; }
+          .footer { margin-top: 40px; font-size: 0.8rem; color: #999; text-align: center; }
         </style>
       </head>
       <body>
-        <h1>تقرير BookFlow</h1>
-        <p>تاريخ التصدير: ${new Date().toLocaleDateString('ar')}</p>
+        <div class="header">
+          <h1>تقرير المواعيد — BookFlow</h1>
+          <div>تاريخ التقرير: ${new Date().toLocaleDateString('ar')}</div>
+        </div>
         <table>
-          <tr><th>العميل</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th><th>السعر</th></tr>
-          ${appointments.map(a => `
-            <tr>
-              <td>${a.clientName || '-'}</td>
-              <td>${a.date || '-'}</td>
-              <td>${a.time || '-'}</td>
-              <td>${a.status || '-'}</td>
-              <td>${a.price || 0}</td>
-            </tr>
-          `).join('')}
+          <thead>
+            <tr><th>العميل</th><th>التاريخ</th><th>الوقت</th><th>الخدمة</th><th>السعر</th><th>الحالة</th></tr>
+          </thead>
+          <tbody>
+            ${appointments.map(a => `
+              <tr>
+                <td>${a.clientName || '-'}</td>
+                <td>${new Date(a.date).toLocaleDateString('ar')}</td>
+                <td>${a.time || '-'}</td>
+                <td>${a.service || '-'}</td>
+                <td>${a.price || 0} ج.م</td>
+                <td>${a.status || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
         </table>
+        <div class="footer">تم إنشاء هذا التقرير تلقائياً بواسطة BookFlow</div>
+        <script>window.onload = () => { window.print(); window.close(); }</script>
       </body>
       </html>
-    `;
-    
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(content);
+    `);
     printWindow.document.close();
-    printWindow.print();
-    
-    showToast('تم إنشاء التقرير', 'success');
+    showToast('جاري تحضير ملف PDF...', 'success');
   } catch(e) {
     showToast('خطأ في إنشاء التقرير', 'error');
   }
@@ -1591,27 +1629,18 @@ window.exportToPDF = async function() {
 
 window.exportToGoogleSheets = async function() {
   try {
-    const appointments = [];
-    const clients = [];
-    
     const aptSnap = await getDocs(query(collection(db, 'appointments'), orderBy('date', 'desc'), limit(100)));
-    aptSnap.forEach(d => appointments.push(d.data()));
+    const appointments = aptSnap.docs.map(d => d.data());
     
-    const cliSnap = await getDocs(query(collection(db, 'clients')));
-    cliSnap.forEach(d => clients.push(d.data()));
-    
-    // Create CSV content
-    let csv = 'Name,Phone,Service,Date,Time,Status,Price,Notes\n';
+    // Format as Tab Separated Values (TSV) for easy copy-paste into Sheets
+    let tsv = 'الاسم\tالهاتف\tالخدمة\tالتاريخ\tالوقت\tالحالة\tالسعر\tملاحظات\n';
     appointments.forEach(a => {
-      csv += `"${a.clientName||''}","${a.clientPhone||''}","${a.service||''}","${a.date||''}","${a.time||''}","${a.status||''}","${a.price||0}","${a.notes||''}"\n`;
+      tsv += `${a.clientName||''}\t${a.clientPhone||''}\t${a.service||''}\t${new Date(a.date).toLocaleDateString('ar')}\t${a.time||''}\t${a.status||''}\t${a.price||0}\t${a.notes||''}\n`;
     });
     
-    // Encode for Google Sheets import
-    const encoded = encodeURIComponent(csv);
-    const url = `https://docs.google.com/spreadsheets/u/0/create?usp=sheets&body=${encoded}`;
-    window.open(url, '_blank');
-    
-    showToast('جاري فتح Google Sheets...', 'success');
+    await navigator.clipboard.writeText(tsv);
+    showToast('تم نسخ البيانات! افتح Google Sheets واضغط Ctrl+V لللصق', 'success');
+    window.open('https://sheets.new', '_blank');
   } catch(e) {
     showToast('خطأ في التصدير', 'error');
   }

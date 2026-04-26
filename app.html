@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="dark-theme">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,8 +31,11 @@
     })();
   </script>
   <script>
+    // Force Dark Theme immediately to avoid "flash of unstyled content"
+    document.documentElement.classList.add('dark-theme');
+    
     window.onerror = function(msg, url, line) {
-      alert("Error: " + msg + "\nURL: " + url + "\nLine: " + line);
+      console.error("BookFlow Error: " + msg + "\nURL: " + url + "\nLine: " + line);
     };
   </script>
 </head>
@@ -80,8 +83,10 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">
-        <i class="ph-fill ph-lightning"></i>
-        <span>BookFlow</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="32" height="32" style="flex-shrink: 0;">
+          <path d="M224 128L128 320h128l-32 160 160-224H256l64-128H224z" fill="var(--teal)" />
+        </svg>
+        <span class="logo-text">BookFlow</span>
       </div>
 
       <nav class="sidebar-nav">
@@ -117,6 +122,15 @@
             <i class="ph-bold ph-gear nav-icon"></i>
             <span class="nav-label">الإعدادات</span>
           </a>
+          <div class="nav-divider"></div>
+          <a class="nav-item" id="btnToggleTheme">
+            <i class="ph-bold ph-moon nav-icon"></i>
+            <span class="nav-label">الوضع المظلم</span>
+          </a>
+          <a class="nav-item" id="btnLogOut">
+            <i class="ph-bold ph-sign-out nav-icon"></i>
+            <span class="nav-label">تسجيل الخروج</span>
+          </a>
         <div class="sidebar-user" id="sidebarUserBtn">
           <div class="user-avatar" id="sidebarAvatar">م</div>
           <div class="user-info">
@@ -134,7 +148,7 @@
       <div id="dashboardView" class="view active">
         <div class="dashboard-greeting">
           <div>
-            <h1 id="greetingText">صباح الخير 👋</h1>
+            <h1 id="greetingText"><span class="greeting-msg">صباح الخير</span> <span class="greeting-emoji">👋</span></h1>
             <p id="greetingDate">...</p>
           </div>
           <div class="header-actions">
@@ -432,29 +446,6 @@
           <h3>🏆 أفضل العملاء</h3>
           <div class="top-clients-list" id="topClientsList"></div>
         </div>
-
-        <div class="dashboard-section">
-          <h3>📊 هذا الشهر</h3>
-          <div class="stats-grid grid-3">
-            <div class="stat-card teal">
-              <div class="stat-value" id="statThisMonthApts">0</div>
-              <div class="stat-label">عدد الحجوزات</div>
-            </div>
-            <div class="stat-card green">
-              <div class="stat-value" id="statThisMonthRevenue">0</div>
-              <div class="stat-label">الإيرادات</div>
-            </div>
-            <div class="stat-card amber">
-              <div class="stat-value" id="statThisMonthCancelled">0</div>
-              <div class="stat-label">الملغيات</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="dashboard-section">
-          <h3>🏆 أفضل العملاء</h3>
-          <div id="topClientsList"></div>
-        </div>
       </div>
 
       <!-- VIEW: Settings -->
@@ -465,106 +456,81 @@
         </div>
 
         <div class="dashboard-section">
-          <h3 data-i18n="personal_settings">👤 الإعدادات الشخصية</h3>
-          
-          <div class="d-flex gap-3 mt-16 mb-16">
-            <button class="btn-secondary" id="btnToggleTheme"><i class="ph-bold ph-sun"></i> الوضع الفاتح</button>
-            <button class="btn-secondary" id="btnToggleLang"><i class="ph-bold ph-translate"></i> English</button>
-          </div>
-          
-          <div class="d-flex gap-3 mb-16">
-            <button class="btn-secondary text-teal border-teal" id="btnVerifyEmail" onclick="window.checkAndSendVerification()">
-              <i class="ph-bold ph-envelope"></i> تفعيل الإيميل
-            </button>
-          </div>
-
-          <div class="dashboard-section">
-            <h3>📤 تصدير البيانات</h3>
-            <div class="d-flex gap-3 mt-16">
-              <button class="btn-secondary" onclick="window.exportToExcel()">
-                <i class="ph-bold ph-file-xls"></i> تصدير Excel
-              </button>
-              <button class="btn-secondary" onclick="window.exportToPDF()">
-                <i class="ph-bold ph-file-pdf"></i> تصدير PDF
-              </button>
-              <button class="btn-secondary" onclick="window.exportToGoogleSheets()">
-                <i class="ph-bold ph-table"></i> Google Sheets
+          <h3>👤 الإعدادات الشخصية</h3>
+          <div class="bg-surface p-24 radius-sm border d-flex flex-col gap-16">
+            <div class="d-flex gap-3">
+              <button class="btn-secondary" id="btnToggleTheme"><i class="ph-bold ph-sun"></i> الوضع الفاتح</button>
+              <button class="btn-secondary" id="btnToggleLang"><i class="ph-bold ph-translate"></i> English</button>
+              <button class="btn-secondary text-teal border-teal" id="btnVerifyEmail" onclick="window.checkAndSendVerification()">
+                <i class="ph-bold ph-envelope"></i> تفعيل الإيميل
               </button>
             </div>
-          </div>
-
-          <div class="bg-surface p-24 radius-sm border">
+            
             <div class="form-row grid-2">
               <div class="form-group">
                 <label for="settingName">اسمك الكامل</label>
                 <input type="text" id="settingName" class="form-input" />
               </div>
               <div class="form-group">
-                <label for="settingBusiness">اسم العيادة / العمل</label>
+                <label for="settingBusiness">اسم النشاط التجاري</label>
                 <input type="text" id="settingBusiness" class="form-input" />
               </div>
             </div>
-            
-            <div class="form-group w-50">
-              <label for="settingType">مجال العمل</label>
-              <select id="settingType" class="form-select" title="مجال العمل">
-                <option value="clinic">🏥 عيادة</option>
-                <option value="coaching">🎯 كوتشينج</option>
-                <option value="tutor">📚 مدرس خصوصي</option>
-                <option value="other">📦 أخرى</option>
-              </select>
-            </div>
+            <button class="btn-primary" id="btnSaveProfile" style="align-self: flex-start;">💾 حفظ الملف الشخصي</button>
           </div>
         </div>
 
         <div class="dashboard-section">
-          <h3>🔗 رابط الحجز</h3>
-          <div class="bg-surface p-24 radius-sm border mt-16 d-flex flex-col gap-4">
-            <p class="text-secondary btn-sm">استخدم هذا الرابط لإرساله لعملائك ليقوموا بالحجز بأنفسهم.</p>
-            <div class="d-flex align-center bg-void border radius-sm p-8-16">
-              <span class="text-secondary ml-8" dir="ltr">bookflow.app/book/</span>
-              <input type="text" id="bookingUsername" class="form-input flex-1 border-none bg-transparent p-0" dir="ltr" placeholder="username" title="اسم المستخدم لصفحة الحجز"/>
-            </div>
-            <div class="d-flex gap-3">
-              <button class="btn-secondary" id="btnCopyLink"><i class="ph-bold ph-copy"></i> نسخ الرابط</button>
-              <button class="btn-primary" id="btnSaveSettings">💾 حفظ الإعدادات</button>
-            </div>
+          <h3>📤 تصدير البيانات والتقارير</h3>
+          <div class="bg-surface p-24 radius-sm border d-flex gap-3">
+            <button class="btn-secondary" onclick="window.exportToExcel()">
+              <i class="ph-bold ph-file-xls"></i> تصدير Excel
+            </button>
+            <button class="btn-secondary" onclick="window.exportToPDF()">
+              <i class="ph-bold ph-file-pdf"></i> تصدير PDF
+            </button>
+            <button class="btn-secondary" onclick="window.exportToGoogleSheets()">
+              <i class="ph-bold ph-table"></i> Google Sheets
+            </button>
           </div>
         </div>
 
+        <div class="dashboard-section">
+          <h3>🔗 رابط الحجز الخاص بك</h3>
+          <div class="bg-surface p-24 radius-sm border d-flex flex-col gap-12">
+            <p class="text-secondary btn-sm">هذا هو الرابط الذي ستشاركه مع عملائك ليقوموا بالحجز بأنفسهم.</p>
+            <div class="d-flex gap-2">
+              <input type="text" id="bookingUsername" class="form-input flex-1" placeholder="your-name" dir="ltr" />
+              <button class="btn-secondary" id="btnCopyLink">
+                <i class="ph-bold ph-copy"></i> نسخ الرابط
+              </button>
+            </div>
+            <button class="btn-primary" id="btnSaveLink" style="align-self: flex-start;">💾 حفظ الرابط</button>
+          </div>
+        </div>
+
+        <!-- Work Hours -->
         <div class="dashboard-section">
           <h3>⏰ مواعيد العمل</h3>
-          <div class="bg-surface p-24 radius-sm border mt-16 d-flex flex-col gap-4">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="bg-surface p-24 radius-sm border d-flex flex-col gap-16">
+            <div class="form-row grid-2">
               <div class="form-group">
-                <label for="settingStartTime">وقت البداية</label>
+                <label>بداية الدوام</label>
                 <input type="time" id="settingStartTime" class="form-input" value="09:00" />
               </div>
               <div class="form-group">
-                <label for="settingEndTime">وقت النهاية</label>
+                <label>نهاية الدوام</label>
                 <input type="time" id="settingEndTime" class="form-input" value="18:00" />
               </div>
             </div>
             <div class="form-group">
-              <label for="settingSlotDuration">مدة الحجز الافتراضية (دقائق)</label>
-              <select id="settingSlotDuration" class="form-select" title="مدة الحجز">
+              <label>مدة الجلسة الافتراضية</label>
+              <select id="settingSlotDuration" class="form-select">
                 <option value="15">15 دقيقة</option>
                 <option value="30" selected>30 دقيقة</option>
                 <option value="45">45 دقيقة</option>
                 <option value="60">60 دقيقة</option>
               </select>
-            </div>
-            <div class="form-group">
-              <label>أيام العمل</label>
-              <div class="d-flex gap-2 flex-wrap" id="workDaysContainer">
-                <label class="day-toggle"><input type="checkbox" value="0" /> أحد</label>
-                <label class="day-toggle"><input type="checkbox" value="1" /> إثنين</label>
-                <label class="day-toggle"><input type="checkbox" value="2" /> ثلاثاء</label>
-                <label class="day-toggle"><input type="checkbox" value="3" /> أربعاء</label>
-                <label class="day-toggle"><input type="checkbox" value="4" /> خميس</label>
-                <label class="day-toggle"><input type="checkbox" value="5" /> جمعة</label>
-                <label class="day-toggle"><input type="checkbox" value="6" /> سبت</label>
-              </div>
             </div>
             <button class="btn-primary" id="btnSaveWorkHours" style="align-self: flex-start;">💾 حفظ مواعيد العمل</button>
           </div>
@@ -586,88 +552,30 @@
               </button>
             </div>
           </div>
-<!-- Payment Methods -->
+        </div>
+
+        <!-- Payment Methods -->
         <div class="dashboard-section">
-          <h3>💳 طرق الدفع وتحصيل الفلوس</h3>
+          <h3>💳 طرق الدفع</h3>
           <div class="bg-surface p-24 radius-sm border mt-16 d-flex flex-col gap-16">
             <p class="text-secondary btn-sm">فعل طرق الدفع اللي عايز تستلم عليها فلوسك من العملاء.</p>
             
-            <!-- Vodafone Cash -->
             <div class="d-flex align-center gap-3 p-12-16 radius-sm border bg-void">
               <div class="stat-icon" style="background: rgba(230, 0, 0, 0.1); color: #E60000;"><i class="ph-fill ph-phone"></i></div>
               <div class="flex-1">
-                <div style="font-weight: 600;">فودافون كاش (Vodafone Cash)</div>
-                <input type="tel" id="settingVodafoneCash" class="form-input mt-4" placeholder="رقم فودافون كاش الخاص بك" dir="ltr" />
+                <div style="font-weight: 600;">فودافون كاش</div>
+                <input type="tel" id="settingVodafoneCash" class="form-input mt-4" placeholder="رقم فودافون كاش" dir="ltr" />
               </div>
               <div class="form-switch">
                 <input type="checkbox" id="enableVodafoneCash" checked />
               </div>
             </div>
 
-            <!-- Stripe (Card) -->
             <div class="d-flex align-center gap-3 p-12-16 radius-sm border bg-void">
               <div class="stat-icon" style="background: rgba(103, 114, 229, 0.1); color: #6772E5;"><i class="ph-fill ph-credit-card"></i></div>
               <div class="flex-1">
-                <div style="font-weight: 600;">الدفع بالكارت (Stripe)</div>
-                <input type="text" id="settingStripeKey" class="form-input mt-4" placeholder="Stripe Public Key (pk_test...)" dir="ltr" />
-              </div>
-              <div class="form-switch">
-                <input type="checkbox" id="enableStripe" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Notifications -->
-        <div class="dashboard-section">
-          <h3>🔔 الإشعارات والتذكيرات</h3>
-          <div class="bg-surface p-24 radius-sm border mt-16 d-flex flex-col gap-16">
-            <p class="text-secondary btn-sm">فعّل الإشعارات التلقائية عشان تقلل نسبة عدم الحضور.</p>
-            
-            <div class="d-flex align-center gap-3 p-12-16 radius-sm border bg-void">
-              <div class="stat-icon" style="background: rgba(37, 211, 102, 0.1); color: #25D366;"><i class="ph-fill ph-whatsapp-logo"></i></div>
-              <div class="flex-1">
-                <div style="font-weight: 600;">تذكير واتساب قبل الموعد</div>
-                <select id="settingWAReminder" class="form-select mt-4">
-                  <option value="0">معطل</option>
-                  <option value="60">قبل ساعة واحدة</option>
-                  <option value="1440">قبل يوم كامل</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="d-flex align-center gap-3 p-12-16 radius-sm border bg-void">
-              <div class="stat-icon" style="background: rgba(0, 102, 255, 0.1); color: #0066FF;"><i class="ph-fill ph-bell"></i></div>
-              <div class="flex-1">
-                <div style="font-weight: 600;">إشعار المتصفح</div>
-                <select id="settingBrowserNotify" class="form-select mt-4">
-                  <option value="0">معطل</option>
-                  <option value="30">قبل 30 دقيقة</option>
-                  <option value="60">قبل ساعة واحدة</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="d-flex align-center gap-3 p-12-16 radius-sm border bg-void">
-              <div class="stat-icon" style="background: rgba(255, 193, 7, 0.1); color: #FFC107;"><i class="ph-fill ph-envelope"></i></div>
-              <div class="flex-1">
-                <div style="font-weight: 600;">إيميل تأكيد الحجز</div>
-                <div class="form-switch mt-4">
-                  <input type="checkbox" id="settingEmailConfirm" checked />
-                </div>
-              </div>
-            </div>
-
-            <button class="btn-primary" id="btnSaveNotifications" style="align-self: flex-start;">💾 حفظ الإعدادات</button>
-          </div>
-        </div>
-
-            <!-- Stripe (Card) -->
-            <div class="d-flex align-center gap-3 p-12-16 radius-sm border bg-void">
-              <div class="stat-icon" style="background: rgba(103, 114, 229, 0.1); color: #6772E5;"><i class="ph-fill ph-credit-card"></i></div>
-              <div class="flex-1">
-                <div style="font-weight: 600;">الدفع بالكارت (Stripe)</div>
-                <input type="text" id="settingStripeKey" class="form-input mt-4" placeholder="Stripe Public Key (pk_test...)" dir="ltr" />
+                <div style="font-weight: 600;">Stripe (Card)</div>
+                <input type="text" id="settingStripeKey" class="form-input mt-4" placeholder="Stripe Key" dir="ltr" />
               </div>
               <div class="form-switch">
                 <input type="checkbox" id="enableStripe" />
@@ -678,43 +586,47 @@
           </div>
         </div>
 
+        <!-- Notifications -->
+        <div class="dashboard-section">
+          <h3>🔔 الإشعارات</h3>
+          <div class="bg-surface p-24 radius-sm border mt-16 d-flex flex-col gap-16">
+            <div class="d-flex align-center gap-3 p-12-16 radius-sm border bg-void">
+              <div class="stat-icon" style="background: rgba(37, 211, 102, 0.1); color: #25D366;"><i class="ph-fill ph-whatsapp-logo"></i></div>
+              <div class="flex-1">
+                <div style="font-weight: 600;">تذكير واتساب</div>
+                <select id="settingWAReminder" class="form-select mt-4">
+                  <option value="0">معطل</option>
+                  <option value="60">قبل ساعة</option>
+                  <option value="1440">قبل يوم</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn-primary" id="btnSaveNotifications" style="align-self: flex-start;">💾 حفظ الإشعارات</button>
+          </div>
+        </div>
+
         <!-- Social Media & Communication -->
         <div class="dashboard-section">
           <h3>📱 التواصل والسوشيال ميديا</h3>
           <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 8px; margin-bottom: 16px;">أضف روابط التواصل الخاصة بك — ستظهر للعملاء في صفحة الحجز</p>
           <div class="bg-surface p-24 radius-sm border d-flex flex-col gap-4">
-            
             <div class="form-group">
-              <label><i class="ph-fill ph-whatsapp-logo" style="color: #25D366; font-size: 1.1rem;"></i> رقم واتساب (للعملاء)</label>
+              <label><i class="ph-fill ph-whatsapp-logo" style="color: #25D366;"></i> رقم واتساب</label>
               <div class="d-flex gap-2">
                 <input type="tel" id="settingWhatsApp" class="form-input flex-1" placeholder="01012345678" dir="ltr" />
-                <button class="btn-secondary whitespace-nowrap" onclick="window.testWhatsApp()">
-                  <i class="ph-bold ph-paper-plane-tilt"></i> تجربة
-                </button>
+                <button class="btn-secondary whitespace-nowrap" onclick="window.testWhatsApp()">تجربة</button>
               </div>
-              <small class="text-muted btn-xs mt-4 d-block">سيظهر زر واتساب في صفحة الحجز وبجانب كل عميل</small>
             </div>
-
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
               <div class="form-group">
-                <label><i class="ph-fill ph-instagram-logo" style="color: #E4405F; font-size: 1.1rem;"></i> Instagram</label>
+                <label><i class="ph-fill ph-instagram-logo" style="color: #E4405F;"></i> Instagram</label>
                 <input type="text" id="settingInstagram" class="form-input" placeholder="@username" dir="ltr" />
               </div>
               <div class="form-group">
-                <label><i class="ph-fill ph-facebook-logo" style="color: #1877F2; font-size: 1.1rem;"></i> Facebook</label>
+                <label><i class="ph-fill ph-facebook-logo" style="color: #1877F2;"></i> Facebook</label>
                 <input type="text" id="settingFacebook" class="form-input" placeholder="facebook.com/page" dir="ltr" />
               </div>
             </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-              <div class="form-group">
-                <label><i class="ph-fill ph-tiktok-logo" style="color: var(--text-primary); font-size: 1.1rem;"></i> TikTok</label>
-                <input type="text" id="settingTikTok" class="form-input" placeholder="@username" dir="ltr" />
-              </div>
-              <div class="form-group">
-                <label><i class="ph-fill ph-globe" style="color: var(--teal); font-size: 1.1rem;"></i> الموقع الإلكتروني</label>
-                <input type="text" id="settingWebsite" class="form-input" placeholder="https://mysite.com" dir="ltr" />
-              </div>
             </div>
 
             <div class="form-group">

@@ -1,460 +1,601 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="dark-theme">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BookFlow — إدارة المواعيد بذكاء</title>
-  
-  <!-- SEO Meta Tags -->
-  <meta name="description" content="BookFlow بيخليك تنظم مواعيدك، تتابع عملائك، وتشاركهم رابط حجز في ثواني. مدعوم بالذكاء الاصطناعي.">
-  <meta name="keywords" content="حجز مواعيد, نظام حجز, إدارة عملاء,ذكاء اصطناعي, Egypt, SaaS,预约系统">
-  <meta name="author" content="BookFlow">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://micro-saa-s-xi.vercel.app">
-  
-  <!-- Open Graph -->
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="BookFlow — إدارة المواعيد بذكاء">
-  <meta property="og:description" content="نظام ذكي لإدارة المواعيد والعملاء مدعوم بالذكاء الاصطناعي.">
-  <meta property="og:url" content="https://micro-saa-s-xi.vercel.app">
-  <meta property="og:image" content="/icon.svg">
-  <meta property="og:locale" content="ar_EG">
-  
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="BookFlow — إدارة المواعيد بذكاء">
-  <meta name="twitter:description" content="نظام ذكي لإدارة المواعيد والعملاء.">
-  
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#10B981">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="/icon.svg">
-  
-  <!-- Styles & Icons -->
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="landing.css">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookFlow — Smart Appointment Management</title>
+    
+    <!-- Google Fonts: Inter (English) & Cairo (Arabic) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            /* Inherit from global but redefine for landing specific needs */
+            --accent-primary: #6366f1;
+            --accent-secondary: #a855f7;
+            --bg-dark: #020617;
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', 'Cairo', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        /* Particles Background */
+        #particles-js {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
+        }
+
+        /* Hero Preview Mockup */
+        .hero-preview {
+            margin-top: 60px;
+            position: relative;
+            z-index: 10;
+            perspective: 1000px;
+        }
+
+        .mockup-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 12px;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.5);
+            transform: rotateX(5deg);
+            transition: var(--transition);
+        }
+
+        .mockup-container:hover {
+            transform: rotateX(0deg) translateY(-10px);
+            border-color: var(--accent-primary);
+        }
+
+        .mockup-img {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
+            display: block;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        /* Reveal Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stagger-1 { transition-delay: 0.1s; }
+        .stagger-2 { transition-delay: 0.2s; }
+        .stagger-3 { transition-delay: 0.3s; }
+
+        /* Navigation Premium */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            background: rgba(2, 6, 23, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.5rem 0;
+            transition: var(--transition);
+        }
+        
+        .navbar.scrolled {
+            padding: 0.8rem 0;
+            background: rgba(2, 6, 23, 0.9);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #fff;
+            text-decoration: none;
+            letter-spacing: -1px;
+        }
+        
+        .logo i { 
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.2rem;
+            filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
+        }
+
+        .nav-links { display: flex; gap: 3rem; align-items: center; }
+        .nav-links a {
+            text-decoration: none;
+            color: #94a3b8;
+            font-weight: 600;
+            transition: var(--transition);
+            font-size: 0.95rem;
+            position: relative;
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px; left: 0; width: 0;
+            height: 2px; background: var(--accent-primary);
+            transition: var(--transition);
+        }
+        
+        .nav-links a:hover { color: #fff; }
+        .nav-links a:hover::after { width: 100%; }
+
+        /* Hero Section Premium */
+        .hero {
+            padding: 15rem 0 10rem;
+            position: relative;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            padding: 0.6rem 1.5rem;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            text-transform: uppercase;
+        /* Feature Cards Premium */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 2rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition);
+        }
+
+        .feature-card {
+            padding: 4rem 3rem;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            background: rgba(30, 41, 59, 0.6);
+            border-color: var(--accent-primary);
+            box-shadow: 0 40px 80px -20px rgba(0,0,0,0.5);
+        }
+
+        .feature-icon {
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+            color: #818cf8;
+            border-radius: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 2.5rem;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        /* Pricing Premium */
+        .pricing-card {
+            padding: 4rem 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card.popular {
+            background: rgba(99, 102, 241, 0.05);
+            border: 2px solid var(--accent-primary);
+            transform: scale(1.05);
+            z-index: 2;
+        }
+        
+        .pricing-card.popular::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 5px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .price { font-size: 4.5rem; font-weight: 900; margin: 2rem 0; letter-spacing: -2px; }
+        .price span { font-size: 1.2rem; color: #64748b; font-weight: 500; }
+
+        /* Stats Premium */
+        .stat-item {
+            padding: 3rem;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .stat-item:last-child { border-right: none; }
+
+        .stat-number {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Mockup Premium */
+        .mockup-container {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 100px 150px -50px rgba(0,0,0,0.8);
+        }
+        
+        .mockup-img {
+            border-radius: 1rem;
+            filter: saturate(1.2) contrast(1.1);
+        }
+
+        /* Footer Premium */
+        footer {
+            background: #020617;
+            padding: 10rem 0 5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-desc { color: #64748b; font-size: 1.1rem; }
+        
+        .social-icon-circle {
+            width: 50px; height: 50px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        
+        .social-icon-circle:hover {
+            background: var(--accent-primary);
+            color: white;
+            transform: translateY(-5px) rotate(10deg);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Animations */
+        .reveal { 
+            opacity: 0; 
+            transform: translateY(50px); 
+            transition: 1s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+    </style>
 </head>
 <body>
+    <div id="particles-js"></div>
 
-  <!-- Navbar -->
-  <nav class="navbar" id="mainNav">
-    <div class="nav-brand">
-      <div class="brand-icon">
-        <i class="ph-fill ph-lightning"></i>
-      </div>
-      BookFlow
-    </div>
-    <nav class="nav-links">
-      <a href="#features">المميزات</a>
-      <a href="#ai-section">الذكاء الاصطناعي</a>
-      <a href="#pricing">الأسعار</a>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-content">
+            <a href="#" class="logo">
+                <i class="ph-fill ph-lightning"></i>
+                <span>BookFlow</span>
+            </a>
+            
+            <div class="nav-links">
+                <a href="#features" data-i18n="nav_features">المميزات</a>
+                <a href="#pricing" data-i18n="nav_pricing">الأسعار</a>
+                <a href="#about" data-i18n="nav_about">من نحن</a>
+            </div>
+
+            <div class="nav-actions">
+                <button class="icon-btn" id="btnToggleLang" title="Change Language">
+                    <i class="ph-bold ph-translate"></i>
+                </button>
+                <a href="app.html" class="btn btn-primary" data-i18n="nav_login">ابدأ الآن</a>
+            </div>
+        </div>
     </nav>
-    <a href="app.html" class="btn-primary nav-cta">
-      ابدأ مجاناً
-      <i class="ph-bold ph-arrow-left"></i>
-    </a>
-    <button class="mobile-menu-btn" id="mobileMenuBtn" title="قائمة المحمول">
-      <i class="ph-bold ph-list"></i>
-    </button>
-  </nav>
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-aurora"></div>
-    <div class="hero-grid-bg"></div>
-
-    <div class="hero-content">
-      <div class="hero-badge animate-on-scroll">
-        <span class="badge-dot"></span>
-        <span class="badge-text">مدعوم بالذكاء الاصطناعي</span>
-        <i class="ph-fill ph-sparkle btn-sm"></i>
-      </div>
-
-      <h1 class="hero-title animate-on-scroll">
-        إدارة المواعيد
-        <span class="hero-highlight">بذكاء.</span>
-        <br>مش بفوضى.
-      </h1>
-
-      <p class="hero-subtitle animate-on-scroll">
-        BookFlow بيخليك تنظم مواعيدك، تتابع عملائك، وتشاركهم رابط حجز في ثواني.
-        مدعوم بالذكاء الاصطناعي لتوصيات ذكية وتحليلات احترافية.
-      </p>
-
-      <div class="hero-actions animate-on-scroll">
-        <a href="app.html" class="btn-primary-hero">
-          <span>ابدأ مجاناً — 14 يوم</span>
-          <i class="ph-bold ph-arrow-left"></i>
-        </a>
-        <a href="#features" class="btn-ghost-hero">
-          <i class="ph-bold ph-play-circle"></i>
-          <span>اكتشف المميزات</span>
-        </a>
-      </div>
-
-      <!-- Floating Stats -->
-      <div class="hero-social-proof animate-on-scroll">
-        <div class="proof-avatars">
-          <div class="proof-avatar bg-teal">أ</div>
-          <div class="proof-avatar bg-green">م</div>
-          <div class="proof-avatar bg-amber">ع</div>
-          <div class="proof-avatar bg-danger">ن</div>
-        </div>
-        <div class="proof-text">
-          <strong>+2,500</strong> عميل يثقون في BookFlow
-        </div>
-      </div>
-    </div>
-
-    <!-- Hero Mockup -->
-    <div class="hero-mockup animate-on-scroll">
-      <div class="mockup-window">
-        <div class="mockup-header">
-          <div class="mockup-dots">
-            <span></span><span></span><span></span>
-          </div>
-          <div class="mockup-url">bookflow.app/dashboard</div>
-        </div>
-        <div class="mockup-body">
-          <div class="mockup-sidebar">
-            <div class="mockup-nav-item active"></div>
-            <div class="mockup-nav-item"></div>
-            <div class="mockup-nav-item"></div>
-            <div class="mockup-nav-item"></div>
-          </div>
-          <div class="mockup-content">
-            <div class="mockup-header-row">
-              <div class="mockup-header-bar">
-                <div class="mockup-avatar"></div>
-                <div class="mockup-user-info">
-                  <div class="mockup-line short"></div>
-                  <div class="mockup-line shorter"></div>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge reveal">
+                <div class="badge-dot"></div>
+                <span data-i18n="hero_badge">مدعوم بالذكاء الاصطناعي</span>
+            </div>
+            <h1 class="hero-title reveal">
+                <span data-i18n="hero_title_1">إدارة المواعيد</span>
+                <span class="gradient-text" data-i18n="hero_title_2">بذكاء.</span>
+            </h1>
+            <p class="hero-subtitle reveal" data-i18n="hero_desc">
+                نظم مواعيدك، تتابع عملائك، وتشارك رابط حجز احترافي في ثواني. منصة متكاملة لنمو عملك.
+            </p>
+            <div class="hero-actions reveal">
+                <a href="app.html" class="btn btn-primary" data-i18n="btn_get_started">
+                    ابدأ مجاناً
+                    <i class="ph-bold ph-arrow-left" id="ctaIcon"></i>
+                </a>
+                <a href="#features" class="btn btn-secondary" data-i18n="btn_demo">شاهد الديمو</a>
+            </div>
+            
+            <div class="hero-preview reveal">
+                <div class="mockup-container">
+                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2426" alt="BookFlow Premium Dashboard" class="mockup-img">
                 </div>
-              </div>
             </div>
-            <div class="mockup-stat-row">
-              <div class="mockup-stat-card">
-                <div class="mockup-stat-icon blue">📅</div>
-                <div class="mockup-stat-text">
-                  <div class="mockup-line small"></div>
-                  <div class="mockup-line tiny"></div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container stats-grid">
+            <div class="stat-item reveal">
+                <div class="stat-number" data-target="2500">0</div>
+                <div class="stat-label" data-i18n="stat_customers">عميل يثق بنا</div>
+            </div>
+            <div class="stat-item reveal">
+                <div class="stat-number" data-target="50000">0</div>
+                <div class="stat-label" data-i18n="stat_bookings">موعد تم تنظيمه</div>
+            </div>
+            <div class="stat-item reveal">
+                <div class="stat-number" data-target="99">0</div>
+                <div class="stat-label" data-i18n="stat_satisfaction">% رضا العملاء</div>
+            </div>
+            <div class="stat-item reveal">
+                <div class="stat-number" data-target="80">0</div>
+                <div class="stat-label" data-i18n="stat_no_show">% تقليل عدم الحضور</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header reveal">
+                <h2 data-i18n="features_title">كل ما تحتاجه للنجاح</h2>
+                <p data-i18n="features_subtitle">أدوات ذكية مصممة لتبسيط أعمالك وزيادة أرباحك.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card glass-card reveal stagger-1">
+                    <div class="feature-icon"><i class="ph-fill ph-calendar-check"></i></div>
+                    <h3 data-i18n="feat_1_title">حجز ذكي</h3>
+                    <p data-i18n="feat_1_desc">رابط حجز مخصص لعملائك يعمل على مدار الساعة دون تدخل منك.</p>
                 </div>
-              </div>
-              <div class="mockup-stat-card">
-                <div class="mockup-stat-icon green">👥</div>
-                <div class="mockup-stat-text">
-                  <div class="mockup-line small"></div>
-                  <div class="mockup-line tiny"></div>
+                <div class="feature-card glass-card reveal stagger-2">
+                    <div class="feature-icon"><i class="ph-fill ph-lightning"></i></div>
+                    <h3 data-i18n="feat_2_title">تأكيد فوري</h3>
+                    <p data-i18n="feat_2_desc">إرسال رسائل تأكيد وتذكير آلي عبر الواتساب والبريد الإلكتروني.</p>
                 </div>
-              </div>
-              <div class="mockup-stat-card">
-                <div class="mockup-stat-icon amber">💰</div>
-                <div class="mockup-stat-text">
-                  <div class="mockup-line small"></div>
-                  <div class="mockup-line tiny"></div>
+                <div class="feature-card glass-card reveal stagger-3">
+                    <div class="feature-icon"><i class="ph-fill ph-chart-line-up"></i></div>
+                    <h3 data-i18n="feat_3_title">تحليلات متقدمة</h3>
+                    <p data-i18n="feat_3_desc">تقارير مفصلة عن أدائك، أرباحك، ونمو قاعدة عملائك.</p>
                 </div>
-              </div>
             </div>
-            <div class="mockup-chart-area">
-              <div class="mockup-chart-title"></div>
-              <div class="mockup-bars">
-                <div class="mockup-bar" style="height:40%"></div>
-                <div class="mockup-bar" style="height:65%"></div>
-                <div class="mockup-bar" style="height:50%"></div>
-                <div class="mockup-bar" style="height:80%"></div>
-                <div class="mockup-bar" style="height:45%"></div>
-                <div class="mockup-bar" style="height:70%"></div>
-                <div class="mockup-bar" style="height:60%"></div>
-              </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <div class="section-header reveal">
+                <h2 data-i18n="pricing_title">خطط تناسب طموحاتك</h2>
+                <p data-i18n="pricing_subtitle">ابدأ مجاناً وقم بالترقية مع نمو أعمالك.</p>
             </div>
-            <div class="mockup-list">
-              <div class="mockup-list-item">
-                <div class="mockup-avatar sm"></div>
-                <div class="mockup-line medium"></div>
-              </div>
-              <div class="mockup-list-item">
-                <div class="mockup-avatar sm"></div>
-                <div class="mockup-line medium"></div>
-              </div>
+            <div class="pricing-grid">
+                <div class="pricing-card glass-card reveal stagger-1">
+                    <h3 data-i18n="plan_free">الباقة المجانية</h3>
+                    <div class="price">0<span>/شهر</span></div>
+                    <ul class="price-list">
+                        <li><i class="ph-bold ph-check"></i> <span data-i18n="p_1">50 موعد/شهر</span></li>
+                        <li><i class="ph-bold ph-check"></i> <span data-i18n="p_2">إدارة العملاء</span></li>
+                        <li><i class="ph-bold ph-check"></i> <span data-i18n="p_3">رابط حجز أساسي</span></li>
+                    </ul>
+                    <a href="app.html" class="btn btn-secondary" data-i18n="btn_choose">ابدأ الآن</a>
+                </div>
+                <div class="pricing-card glass-card popular reveal stagger-2">
+                    <div class="popular-badge" data-i18n="most_popular">الأكثر طلباً</div>
+                    <h3 data-i18n="plan_pro">باقة المحترفين</h3>
+                    <div class="price">199<span>/شهر</span></div>
+                    <ul class="price-list">
+                        <li><i class="ph-bold ph-check"></i> <span data-i18n="p_4">مواعيد غير محدودة</span></li>
+                        <li><i class="ph-bold ph-check"></i> <span data-i18n="p_5">تذكيرات واتساب آلي</span></li>
+                        <li><i class="ph-bold ph-check"></i> <span data-i18n="p_6">تحليلات ذكاء اصطناعي</span></li>
+                        <li><i class="ph-bold ph-check"></i> <span data-i18n="p_7">دعم فني متميز</span></li>
+                    </ul>
+                    <a href="app.html" class="btn btn-primary" data-i18n="btn_choose">اشترك الآن</a>
+                </div>
+                <div class="pricing-card glass-card reveal stagger-3">
+                    <h3 data-i18n="plan_biz">باقة الشركات</h3>
+                    <div class="price">499<span>/شهر</span></div>
+                    <ul class="price-list">
+                        <li><i class="ph-bold ph-check"></i> <span data-i18n="p_8">فريق عمل متعدد</span></li>
+                        <li><i class="ph-bold ph-check"></i> <span data-i18n="p_9">ربط مع أنظمتك الخاصة</span></li>
+                        <li><i class="ph-bold ph-check"></i> <span data-i18n="p_10">هوية بصرية مخصصة</span></li>
+                    </ul>
+                    <a href="app.html" class="btn btn-secondary" data-i18n="btn_choose">تواصل معنا</a>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Brands/Trust Strip -->
-  <section class="trust-strip">
-    <p>يثق بنا أكثر من 2,500+ عيادة و مركز</p>
-    <div class="trust-logos">
-      <span>🏥 عيادات القاهرة</span>
-      <span>🎯 كوتشينج برو</span>
-      <span>📚 أكاديمية التعليم</span>
-      <span>💈 صالونات VIP</span>
-      <span>🦷 طب الأسنان</span>
-    </div>
-  </section>
-
-  <!-- Features Section -->
-  <section id="features" class="features-section">
-    <div class="section-tag animate-on-scroll">
-      <i class="ph-fill ph-sparkle"></i>
-      المميزات
-    </div>
-    <h2 class="section-title animate-on-scroll">كل اللي محتاجه في مكان واحد</h2>
-    <p class="section-desc animate-on-scroll">أدوات احترافية مصممة لمساعدتك في إدارة عملك بكفاءة</p>
-
-    <div class="features-grid">
-      <div class="feature-card animate-on-scroll" style="--card-accent: #0066FF;">
-        <div class="feature-icon-wrap">
-          <i class="ph-fill ph-calendar-check"></i>
-        </div>
-        <h3>إدارة المواعيد</h3>
-        <p>نظم مواعيدك بتقويم ذكي يعرض كل شيء في نظرة واحدة. لا تفوّت أي موعد مرة تانية.</p>
-      </div>
-
-      <div class="feature-card animate-on-scroll" style="--card-accent: #10B981;">
-        <div class="feature-icon-wrap">
-          <i class="ph-fill ph-link"></i>
-        </div>
-        <h3>رابط حجز مخصص</h3>
-        <p>شارك رابط حجز احترافي لعملائك. يحجزوا بنفسهم في ثواني، وأنت تركز على شغلك.</p>
-      </div>
-
-      <div class="feature-card animate-on-scroll" style="--card-accent: #F59E0B;">
-        <div class="feature-icon-wrap">
-          <i class="ph-fill ph-users"></i>
-        </div>
-        <h3>إدارة العملاء</h3>
-        <p>ملف كامل لكل عميل: تاريخ الزيارات، الملاحظات، والإنفاق. اعرف عميلك أكتر.</p>
-      </div>
-
-      <div class="feature-card animate-on-scroll" style="--card-accent: #EF4444;">
-        <div class="feature-icon-wrap">
-          <i class="ph-fill ph-bell-ringing"></i>
-        </div>
-        <h3>تذكيرات تلقائية</h3>
-        <p>تذكيرات WhatsApp تلقائية قبل الموعد. قلل نسبة عدم الحضور بنسبة 80%.</p>
-      </div>
-
-      <div class="feature-card animate-on-scroll" style="--card-accent: #8B5CF6;">
-        <div class="feature-icon-wrap">
-          <i class="ph-fill ph-chart-line-up"></i>
-        </div>
-        <h3>إحصائيات ذكية</h3>
-        <p>تقارير مفصلة عن الإيرادات، أفضل العملاء، وأوقات الذروة. اتخذ قرارات مبنية على بيانات.</p>
-      </div>
-
-      <div class="feature-card animate-on-scroll" style="--card-accent: #0066FF;">
-        <div class="feature-icon-wrap">
-          <i class="ph-fill ph-file-xls"></i>
-        </div>
-        <h3>تصدير إكسيل</h3>
-        <p>صدّر بياناتك في أي وقت بضغطة واحدة. بياناتك ملكك دائماً.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- AI Section -->
-  <section id="ai-section" class="ai-section">
-    <div class="ai-glow"></div>
-    <div class="ai-content">
-      <div class="ai-text">
-        <div class="section-tag animate-on-scroll" style="--tag-color: #8B5CF6;">
-          <i class="ph-fill ph-brain"></i>
-          مدعوم بالذكاء الاصطناعي
-        </div>
-        <h2 class="section-title animate-on-scroll">مساعدك الذكي<br><span style="color: #8B5CF6;">FlowAI</span></h2>
-        <p class="section-desc animate-on-scroll" style="text-align: right;">مساعد ذكي مدمج في لوحة التحكم يقدملك توصيات وتحليلات بناءً على بيانات عملك الفعلية.</p>
-
-        <div class="ai-features-list">
-          <div class="ai-feature-item animate-on-scroll">
-            <div class="ai-feature-icon"><i class="ph-fill ph-lightbulb"></i></div>
-            <div>
-              <strong>توصيات ذكية</strong>
-              <p>يقترح أفضل الأوقات للمواعيد بناءً على أنماط الحجز</p>
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-grid">
+            <div class="footer-info">
+                <div class="logo footer-logo">
+                    <i class="ph-fill ph-lightning"></i>
+                    <span>BookFlow</span>
+                </div>
+                <p class="footer-desc" data-i18n="footer_desc">المنصة الرائدة في الوطن العربي لإدارة المواعيد والخدمات بذكاء وسهولة.</p>
+                <div class="nav-actions">
+                    <a href="#" class="social-icon-circle"><i class="ph-bold ph-facebook-logo"></i></a>
+                    <a href="#" class="social-icon-circle"><i class="ph-bold ph-instagram-logo"></i></a>
+                    <a href="#" class="social-icon-circle"><i class="ph-bold ph-twitter-logo"></i></a>
+                </div>
             </div>
-          </div>
-          <div class="ai-feature-item animate-on-scroll">
-            <div class="ai-feature-icon"><i class="ph-fill ph-chart-pie-slice"></i></div>
-            <div>
-              <strong>تحليل الأداء</strong>
-              <p>ملخص أسبوعي ذكي عن أداء عملك ونصائح للتحسين</p>
+            <div class="footer-links">
+                <h4 data-i18n="f_col_1">المنصة</h4>
+                <ul>
+                    <li><a href="#features" data-i18n="nav_features">المميزات</a></li>
+                    <li><a href="#pricing" data-i18n="nav_pricing">الأسعار</a></li>
+                    <li><a href="app.html" data-i18n="nav_login">تسجيل الدخول</a></li>
+                </ul>
             </div>
-          </div>
-          <div class="ai-feature-item animate-on-scroll">
-            <div class="ai-feature-icon"><i class="ph-fill ph-chat-teardrop-dots"></i></div>
-            <div>
-              <strong>محادثة طبيعية</strong>
-              <p>اسأل أي سؤال عن بياناتك بلغة طبيعية واحصل على إجابات فورية</p>
+            <div class="footer-links">
+                <h4 data-i18n="f_col_2">الدعم</h4>
+                <ul>
+                    <li><a href="#" data-i18n="f_help">مركز المساعدة</a></li>
+                    <li><a href="#" data-i18n="f_contact">اتصل بنا</a></li>
+                    <li><a href="#" data-i18n="f_privacy">سياسة الخصوصية</a></li>
+                </ul>
             </div>
-          </div>
         </div>
-      </div>
-
-      <div class="ai-demo animate-on-scroll">
-        <div class="ai-chat-window">
-          <div class="ai-chat-header">
-            <div class="ai-avatar-wrap">
-              <div class="ai-avatar"><i class="ph-fill ph-brain"></i></div>
-              <span>FlowAI</span>
-            </div>
-            <div class="ai-status">
-              <span class="ai-status-dot"></span> متصل
-            </div>
-          </div>
-          <div class="ai-chat-body">
-            <div class="ai-msg bot">
-              <span>👋 مرحباً! أنا FlowAI مساعدك الذكي</span>
-            </div>
-            <div class="ai-msg user">
-              <span>إيه أكتر يوم فيه حجوزات الأسبوع ده؟</span>
-            </div>
-            <div class="ai-msg bot">
-              <div class="ai-typing">
-                <span></span><span></span><span></span>
-              </div>
-              <span class="ai-response">📊 يوم الثلاثاء كان الأكثر حجوزات (8 حجوزات). أقترح تفتح slots إضافية يوم الثلاثاء القادم!</span>
-            </div>
-            <div class="ai-msg bot">
-              <span>💡 ملاحظة: 3 عملاء لم يزوروك منذ أكثر من شهر. هل تريد إرسال تذكير لهم؟</span>
-            </div>
-          </div>
-          <div class="ai-chat-input">
-            <input type="text" placeholder="اسأل FlowAI أي سؤال..." disabled>
-            <button title="إرسال"><i class="ph-fill ph-paper-plane-tilt"></i></button>
-          </div>
+        <div class="container footer-bottom">
+            <p>&copy; 2024 BookFlow. All rights reserved.</p>
+            <p>صنع بكل حب في مصر 🇪🇬</p>
         </div>
-      </div>
-    </div>
-  </section>
+    </footer>
 
-  <!-- Stats Counter -->
-  <section class="stats-counter-section">
-    <div class="stats-counter-grid">
-      <div class="counter-item animate-on-scroll">
-        <div class="counter-value" data-target="2500">0</div>
-        <div class="counter-label">عميل نشط</div>
-      </div>
-      <div class="counter-item animate-on-scroll">
-        <div class="counter-value" data-target="50000">0</div>
-        <div class="counter-label">حجز تم إنشاؤه</div>
-      </div>
-      <div class="counter-item animate-on-scroll">
-        <div class="counter-value" data-target="99">0</div>
-        <div class="counter-label">% رضا العملاء</div>
-      </div>
-      <div class="counter-item animate-on-scroll">
-        <div class="counter-value" data-target="80">0</div>
-        <div class="counter-label">% تقليل عدم الحضور</div>
-      </div>
-    </div>
-  </section>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // Particles JS Initialization
+        particlesJS('particles-js', {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#6366f1" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.2, "random": false },
+                "size": { "value": 3, "random": true },
+                "line_linked": { "enable": true, "distance": 150, "color": "#6366f1", "opacity": 0.1, "width": 1 },
+                "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }
+            },
+            "retina_detect": true
+        });
 
-  <!-- Pricing Section -->
-  <section id="pricing" class="pricing-section">
-    <div class="section-tag animate-on-scroll">
-      <i class="ph-fill ph-tag"></i>
-      الأسعار
-    </div>
-    <h2 class="section-title animate-on-scroll">خطط بسيطة — بدون تعقيد</h2>
-    <p class="section-desc animate-on-scroll">اختر الخطة اللي تناسبك وابدأ في دقائق</p>
+        // Navbar Scroll Effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
 
-    <div class="pricing-grid">
-      <div class="pricing-card animate-on-scroll">
-        <div class="plan-name">مجاني</div>
-        <div class="plan-price">0 <span>ج.م/شهر</span></div>
-        <ul class="plan-features">
-          <li><i class="ph-bold ph-check-circle"></i> حتى 20 حجز شهرياً</li>
-          <li><i class="ph-bold ph-check-circle"></i> رابط حجز عام</li>
-          <li><i class="ph-bold ph-check-circle"></i> إدارة العملاء</li>
-          <li class="disabled"><i class="ph-bold ph-x-circle"></i> تذكيرات تلقائية</li>
-          <li class="disabled"><i class="ph-bold ph-x-circle"></i> FlowAI مساعد ذكي</li>
-        </ul>
-        <button class="btn-plan" onclick="window.location.href='app.html'">ابدأ مجاناً</button>
-      </div>
+        // Reveal Animations on Scroll
+        const reveal = () => {
+            const reveals = document.querySelectorAll('.reveal');
+            reveals.forEach(el => {
+                const windowHeight = window.innerHeight;
+                const elementTop = el.getBoundingClientRect().top;
+                const elementVisible = 150;
+                if (elementTop < windowHeight - elementVisible) {
+                    el.classList.add('active');
+                }
+            });
+        };
+        window.addEventListener('scroll', reveal);
+        window.addEventListener('load', reveal);
 
-      <div class="pricing-card featured animate-on-scroll">
-        <div class="plan-badge">الأكثر شيوعاً ⭐</div>
-        <div class="plan-name">Pro</div>
-        <div class="plan-price">99 <span>ج.م/شهر</span></div>
-        <ul class="plan-features">
-          <li><i class="ph-bold ph-check-circle"></i> حجوزات غير محدودة</li>
-          <li><i class="ph-bold ph-check-circle"></i> رابط حجز مخصص</li>
-          <li><i class="ph-bold ph-check-circle"></i> تذكيرات WhatsApp</li>
-          <li><i class="ph-bold ph-check-circle"></i> إحصائيات كاملة</li>
-          <li><i class="ph-bold ph-check-circle"></i> FlowAI مساعد ذكي</li>
-          <li><i class="ph-bold ph-check-circle"></i> تصدير إكسيل</li>
-        </ul>
-        <button class="btn-plan featured-btn" onclick="window.upgradeToPro()">اشترك الآن - 99 ج.م</button>
-      </div>
+        // Stats Counter Animation
+        const animateStats = () => {
+            const stats = document.querySelectorAll('.stat-number');
+            stats.forEach(stat => {
+                const target = +stat.getAttribute('data-target');
+                const count = +stat.innerText;
+                const speed = target / 100;
+                if (count < target) {
+                    stat.innerText = Math.ceil(count + speed);
+                    setTimeout(animateStats, 20);
+                } else {
+                    stat.innerText = target.toLocaleString() + (target === 99 || target === 80 ? '' : '+');
+                }
+            });
+        };
+        
+        // Trigger stats animation when visible
+        const statsSection = document.querySelector('.stats');
+        const observer = new IntersectionObserver((entries) => {
+            if(entries[0].isIntersecting) {
+                animateStats();
+                observer.unobserve(statsSection);
+            }
+        }, { threshold: 0.5 });
+        if(statsSection) observer.observe(statsSection);
 
-      <div class="pricing-card animate-on-scroll">
-        <div class="plan-name">Business</div>
-        <div class="plan-price">299 <span>ج.م/شهر</span></div>
-        <ul class="plan-features">
-          <li><i class="ph-bold ph-check-circle"></i> كل مميزات Pro</li>
-          <li><i class="ph-bold ph-check-circle"></i> أكثر من موظف</li>
-          <li><i class="ph-bold ph-check-circle"></i> تقارير مفصلة</li>
-          <li><i class="ph-bold ph-check-circle"></i> دعم أولوية</li>
-          <li><i class="ph-bold ph-check-circle"></i> API access</li>
-        </ul>
-        <button class="btn-plan" onclick="window.upgradeToBusiness()">تواصل معنا</button>
-      </div>
-    </div>
-  </section>
+        // Scroll Progress Bar
+        const scrollProgress = document.createElement('div');
+        scrollProgress.style.cssText = 'position:fixed;top:0;left:0;height:4px;background:var(--accent-primary);z-index:2000;width:0%;transition:width 0.1s;';
+        document.body.appendChild(scrollProgress);
 
-  <!-- CTA Section -->
-  <section class="cta-section">
-    <div class="cta-aurora"></div>
-    <div class="cta-content animate-on-scroll">
-      <h2>جاهز تبدأ تنظم مواعيدك؟</h2>
-      <p>ابدأ مجاناً لمدة 14 يوم — لا يلزم بطاقة ائتمانية</p>
-      <a href="app.html" class="btn-primary-hero">
-        <span>ابدأ الآن مجاناً</span>
-        <i class="ph-bold ph-arrow-left"></i>
-      </a>
-    </div>
-  </section>
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            scrollProgress.style.width = scrolled + "%";
+        });
 
-  <!-- Footer -->
-  <footer class="site-footer">
-    <div class="footer-content">
-      <div class="footer-brand">
-        <div class="nav-brand">
-          <div class="brand-icon"><i class="ph-fill ph-lightning"></i></div>
-          BookFlow
-        </div>
-        <p>إدارة المواعيد بذكاء — مدعوم بالذكاء الاصطناعي</p>
-        <div class="footer-social d-flex gap-2 mt-16">
-          <a href="#" class="social-icon whatsapp" title="WhatsApp" aria-label="WhatsApp"><i class="ph-fill ph-whatsapp-logo"></i></a>
-          <a href="#" class="social-icon instagram" title="Instagram" aria-label="Instagram"><i class="ph-fill ph-instagram-logo"></i></a>
-          <a href="#" class="social-icon facebook" title="Facebook" aria-label="Facebook"><i class="ph-fill ph-facebook-logo"></i></a>
-          <a href="#" class="social-icon tiktok" title="TikTok" aria-label="TikTok"><i class="ph-fill ph-tiktok-logo"></i></a>
-        </div>
-      </div>
-      <div class="footer-links">
-        <a href="#features">المميزات</a>
-        <a href="#ai-section">الذكاء الاصطناعي</a>
-        <a href="#pricing">الأسعار</a>
-        <a href="app.html">تسجيل الدخول</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>© 2026 BookFlow. جميع الحقوق محفوظة.</p>
-    </div>
-  </footer>
+        // Functional Language Toggle
+        document.getElementById('btnToggleLang').addEventListener('click', () => {
+            const currentDir = document.documentElement.dir;
+            const newDir = currentDir === 'rtl' ? 'ltr' : 'rtl';
+            const newLang = currentDir === 'rtl' ? 'en' : 'ar';
+            
+            document.documentElement.dir = newDir;
+            document.documentElement.lang = newLang;
+            
+            // Toggle text direction for specific elements if needed
+            document.body.classList.toggle('ltr', newDir === 'ltr');
+            
+            // Show a nice feedback toast
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--accent-primary);color:white;padding:1rem 2rem;border-radius:100px;z-index:3000;box-shadow:0 10px 30px var(--accent-glow);animation:fadeInUp 0.3s forwards;';
+            toast.textContent = newLang === 'en' ? 'Language switched to English' : 'تم تغيير اللغة إلى العربية';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        });
 
-  <script src="landing.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW Failed:', err));
-      });
-    }
-  </script>
+        const fadeInUp = document.createElement('style');
+        fadeInUp.textContent = '@keyframes fadeInUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }';
+        document.head.appendChild(fadeInUp);
+    </script>
 </body>
 </html>

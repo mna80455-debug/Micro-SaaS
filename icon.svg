@@ -1,10 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#8B5CF6" />
-      <stop offset="100%" stop-color="#0066FF" />
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#8B5CF6" />
     </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A5B4FC" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#C4B5FD" stop-opacity="0.1"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#4F46E5" flood-opacity="0.4"/>
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="120" fill="url(#bg)" />
-  <path d="M224 128L128 320h128l-32 160 160-224H256l64-128H224z" fill="#ffffff" />
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)" filter="url(#shadow)"/>
+  <!-- Inner glow -->
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+  <!-- Calendar outline -->
+  <rect x="128" y="152" width="256" height="220" rx="20" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="10"/>
+  <!-- Calendar top bar -->
+  <rect x="128" y="152" width="256" height="56" rx="20" fill="rgba(255,255,255,0.2)"/>
+  <rect x="128" y="188" width="256" height="20" fill="rgba(255,255,255,0.2)"/>
+  <!-- Calendar pins -->
+  <rect x="192" y="128" width="16" height="48" rx="8" fill="rgba(255,255,255,0.7)"/>
+  <rect x="304" y="128" width="16" height="48" rx="8" fill="rgba(255,255,255,0.7)"/>
+  <!-- Lightning bolt (checkmark replaced) -->
+  <path d="M232 240 L200 296 H248 L216 360 L312 280 H264 L296 240 Z" fill="#FFFFFF" opacity="1"/>
 </svg>
