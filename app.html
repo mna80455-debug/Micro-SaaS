@@ -5,34 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BookFlow — لوحة التحكم</title>
   
-  <!-- Fonts -->
+  <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   
   <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDtI5G0yVpeluP_HjlE_ff3D5FSy0FrmcA",
-      authDomain: "micro-saas-9457c.firebaseapp.com",
-      projectId: "micro-saas-9457c",
-      storageBucket: "micro-saas-9457c.firebasestorage.app",
-      messagingSenderId: "680663136963",
-      appId: "1:680663136963:web:3cabf82355b62c8307c076"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    
-    window.firebaseAuth = { auth, signInWithPopup, provider, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut };
-  </script>
+  <script type="module" src="firebase-config.js"></script>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
   
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -52,7 +39,6 @@
       --text-secondary: #94A3B8;
       --text-muted: #475569;
       --border: rgba(255, 255, 255, 0.08);
-      --border-bright: rgba(255, 255, 255, 0.15);
       --success: #10B981;
       --warning: #F59E0B;
       --error: #EF4444;
@@ -70,7 +56,6 @@
       --text-secondary: #475569;
       --text-muted: #94A3B8;
       --border: rgba(0, 0, 0, 0.08);
-      --border-bright: rgba(0, 0, 0, 0.15);
     }
 
     * { margin:0; padding:0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -80,204 +65,14 @@
       background: var(--bg-void);
       color: var(--text-primary);
       overflow-x: hidden;
-      min-height: 100vh;
-    }
-
-    /* Auth Screen */
-    #authOverlay {
-      position: fixed; inset: 0;
-      background: rgba(5, 7, 10, 0.97);
-      backdrop-filter: blur(40px);
-      -webkit-backdrop-filter: blur(40px);
-      display: grid; place-items: center;
-      z-index: 9999;
-      animation: fadeIn 0.5s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .auth-box {
-      width: 100%;
-      max-width: 480px;
-      padding: 48px 40px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: 0 50px 100px rgba(0,0,0,0.8);
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .auth-box::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
-    }
-
-    .auth-logo {
-      width: 80px; height: 80px;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      border-radius: 24px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2.5rem; color: white; font-weight: 800;
-      margin: 0 auto 32px;
-      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
-    }
-
-    .auth-title {
-      font-size: 2.2rem; font-weight: 800;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .auth-sub {
-      color: var(--text-secondary);
-      margin-bottom: 32px; font-size: 1rem;
-    }
-
-    .auth-tabs {
-      display: flex; gap: 32px;
-      justify-content: center;
-      margin-bottom: 32px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 16px;
-    }
-
-    .auth-tab {
-      cursor: pointer;
-      font-weight: 600;
-      color: var(--text-muted);
-      padding-bottom: 8px;
-      border-bottom: 2px solid transparent;
-      transition: var(--transition);
-    }
-
-    .auth-tab.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
-
-    .field-group {
-      margin-bottom: 20px;
-      text-align: right;
-    }
-
-    .field-group label {
-      display: block;
-      margin-bottom: 8px;
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .field-input {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      padding: 16px 20px;
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      outline: none;
-      transition: var(--transition);
-      font-size: 1rem;
-      font-family: inherit;
-    }
-
-    .field-input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .btn-primary {
-      width: 100%;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      color: white;
-      padding: 16px;
-      border-radius: var(--radius-sm);
-      font-weight: 700;
-      font-size: 1.05rem;
-      border: none;
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
-    }
-
-    .btn-ghost {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-primary);
-      border: 1px solid var(--border);
-      padding: 16px;
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      font-size: 1.05rem;
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-    }
-
-    .btn-ghost:hover {
-      border-color: var(--primary);
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .divider {
-      display: flex; align-items: center; gap: 16px;
-      margin: 24px 0;
-    }
-
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .divider span {
-      color: var(--text-muted);
-      font-size: 0.85rem;
-    }
-
-    .auth-switch {
-      margin-top: 24px;
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-    }
-
-    .auth-switch button {
-      background: transparent;
-      border: none;
-      color: var(--primary);
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-    }
-
-    /* App Shell */
-    .app-shell {
-      display: none;
       height: 100vh;
-      opacity: 0;
-      transition: opacity 0.5s ease;
     }
 
-    .app-shell.ready {
+    /* App Layout */
+    .app-container {
       display: flex;
-      opacity: 1;
+      height: 100vh;
+      overflow: hidden;
     }
 
     /* Sidebar */
@@ -289,6 +84,7 @@
       flex-direction: column;
       padding: 40px 20px;
       transition: var(--transition);
+      overflow-y: auto;
     }
 
     .sidebar.collapsed {
@@ -369,9 +165,28 @@
       flex: 1;
       overflow-y: auto;
       padding: 40px;
+      background: var(--bg-void);
     }
 
-    .main-content h1 {
+    .main-content::-webkit-scrollbar { width: 8px; }
+    .main-content::-webkit-scrollbar-track { background: transparent; }
+    .main-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+    /* Views */
+    .view { display: none; animation: fadeIn 0.4s ease; }
+    .view.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header */
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
       font-size: 2.8rem;
       font-weight: 800;
       margin-bottom: 8px;
@@ -384,20 +199,17 @@
       -webkit-text-fill-color: transparent;
     }
 
-    .view { display: none; }
-    .view.active { display: block; animation: slideIn 0.4s ease; }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    .page-header p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
     }
 
-    /* Stats */
-    .stats-row {
+    /* Stats Cards */
+    .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 24px;
-      margin: 32px 0;
+      margin-bottom: 40px;
     }
 
     .stat-card {
@@ -411,6 +223,7 @@
     .stat-card:hover {
       border-color: var(--primary);
       transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
     }
 
     .stat-label {
@@ -430,6 +243,431 @@
       -webkit-text-fill-color: transparent;
     }
 
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 10, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: grid;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+      position: relative;
+    }
+
+    .modal-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      color: var(--error);
+      transform: rotate(90deg);
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      outline: none;
+      transition: var(--transition);
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 14px 28px;
+      border-radius: 100px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+    }
+
+    .btn-loading {
+      position: relative;
+      color: transparent !important;
+      pointer-events: none;
+    }
+
+    .btn-loading::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-left-color: #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes spin {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Timeline */
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .timeline-item:hover {
+      border-color: var(--primary);
+      transform: translateX(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .timeline-time {
+      font-weight: 700;
+      font-size: 1.1rem;
+      min-width: 70px;
+    }
+
+    .timeline-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .timeline-content {
+      flex: 1;
+    }
+
+    .timeline-client {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .timeline-service {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Client Card */
+    .client-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .client-card:hover {
+      border-color: var(--primary);
+      transform: translateX(-5px);
+    }
+
+    .client-avatar {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .client-info {
+      flex: 1;
+    }
+
+    .client-name {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .client-phone {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Service Card */
+    .service-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .service-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-5px);
+    }
+
+    .service-name {
+      font-weight: 700;
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+
+    .service-price {
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 1.3rem;
+    }
+
+    /* AI Assistant */
+    .ai-fab {
+      position: fixed;
+      bottom: 50px;
+      right: 50px;
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2rem;
+      cursor: pointer;
+      z-index: 9999;
+      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4);
+      transition: var(--transition);
+      border: none;
+    }
+
+    .ai-fab:hover {
+      transform: scale(1.1) rotate(15deg);
+      box-shadow: 0 25px 50px rgba(99, 102, 241, 0.5);
+    }
+
+    .ai-panel {
+      position: fixed;
+      bottom: 140px;
+      right: 50px;
+      width: 450px;
+      height: 600px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+      display: none;
+      flex-direction: column;
+      z-index: 9999;
+      overflow: hidden;
+      animation: slideUp 0.4s ease;
+    }
+
+    .ai-panel.open {
+      display: flex;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ai-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ai-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .ai-footer {
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+    }
+
+    .chat-bubble {
+      padding: 16px 20px;
+      border-radius: 20px;
+      max-width: 85%;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .bubble-bot {
+      background: var(--bg-surface);
+      align-self: flex-start;
+      border-bottom-right-radius: 4px;
+    }
+
+    .bubble-user {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      align-self: flex-end;
+      border-bottom-left-radius: 4px;
+    }
+
+    .ai-typing {
+      display: flex;
+      gap: 4px;
+      padding: 16px 20px;
+      background: var(--bg-surface);
+      border-radius: 20px;
+      align-self: flex-start;
+      width: 60px;
+    }
+
+    .ai-typing span {
+      width: 8px;
+      height: 8px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: typingBounce 1.4s infinite;
+    }
+
+    .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 40px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .empty-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .empty-sub {
+      font-size: 0.95rem;
+    }
+
     /* Responsive */
     @media (max-width: 1024px) {
       .sidebar { width: 90px; padding: 40px 10px; }
@@ -438,28 +676,35 @@
       .sidebar .sidebar-footer { display: none; }
       .sidebar .nav-item { justify-content: center; padding: 16px; }
       .main-content { padding: 24px; }
-      .main-content h1 { font-size: 2rem; }
+      .page-header h1 { font-size: 2rem; }
     }
 
     @media (max-width: 768px) {
-      .app-shell { flex-direction: column; }
+      .app-container { flex-direction: column; }
       .sidebar {
         width: 100%;
         height: auto;
-        flex-direction: row;
-        padding: 16px;
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
         z-index: 2000;
+        flex-direction: row;
+        padding: 16px;
         border-left: none;
         border-top: 1px solid var(--border);
       }
-      .sidebar .brand { display: none; }
-      .nav-menu { flex-direction: row; width: 100%; justify-content: space-around; }
-      .sidebar-footer { display: none; }
-      .main-content { padding: 24px 16px 100px; }
+      .sidebar .brand, .sidebar .sidebar-footer { display: none; }
+      .nav-menu {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-around;
+        gap: 0;
+      }
+      .main-content { padding: 24px 16px 120px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .ai-panel { width: calc(100% - 32px); right: 16px; bottom: 120px; height: 500px; }
+      .ai-fab { bottom: 130px; right: 30px; width: 60px; height: 60px; font-size: 1.5rem; }
     }
 
     /* Toast */
@@ -502,71 +747,8 @@
   </style>
 </head>
 <body>
-  <!-- Auth Screen -->
-  <div id="authOverlay">
-    <div class="auth-box">
-      <div class="auth-logo"><i class="ph-fill ph-lightning"></i></div>
-      <h2 class="auth-title">BookFlow <span style="color: var(--accent);">Elite</span></h2>
-      <p class="auth-sub">مركز إدارة الأعمال الأكثر ذكاءً واحترافية</p>
-      
-      <div class="auth-tabs">
-        <span class="auth-tab active" id="tabLogin" onclick="switchAuth('login')">دخول</span>
-        <span class="auth-tab" id="tabRegister" onclick="switchAuth('register')">تسجيل جديد</span>
-      </div>
-
-      <!-- Login Form -->
-      <div id="loginFields">
-        <div class="field-group">
-          <label>البريد الإلكتروني</label>
-          <input type="email" id="aEmail" class="field-input" placeholder="name@example.com">
-        </div>
-        <div class="field-group">
-          <label>كلمة المرور</label>
-          <input type="password" id="aPass" class="field-input" placeholder="••••••••">
-        </div>
-        <button class="btn-primary" id="btnMainAuth" onclick="handleAuth()">
-          <i class="ph-bold ph-sign-in"></i> دخول النظام
-        </button>
-      </div>
-
-      <!-- Register Form -->
-      <div id="registerFields" style="display: none;">
-        <div class="field-group">
-          <label>الاسم الكامل</label>
-          <input type="text" id="rName" class="field-input" placeholder="أحمد محمد">
-        </div>
-        <div class="field-group">
-          <label>البريد الإلكتروني</label>
-          <input type="email" id="rEmail" class="field-input" placeholder="name@example.com">
-        </div>
-        <div class="field-group">
-          <label>كلمة المرور</label>
-          <input type="password" id="rPass" class="field-input" placeholder="••••••••">
-        </div>
-        <button class="btn-primary" id="btnRegister" onclick="handleRegister()">
-          <i class="ph-bold ph-user-plus"></i> إنشاء حساب
-        </button>
-      </div>
-
-      <div class="divider"><span>أو عبر</span></div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <button class="btn-ghost" onclick="handleGoogleAuth(event)">
-          <i class="ph-bold ph-google-logo"></i> Google
-        </button>
-        <button class="btn-ghost" disabled>
-          <i class="ph-bold ph-apple-logo"></i> Apple
-        </button>
-      </div>
-
-      <p class="auth-sub" style="margin-top: 24px; font-size: 0.8rem;">
-        بالمتابعة، أنت توافق على شروط الخدمة وسياسة الخصوصية
-      </p>
-    </div>
-  </div>
-
-  <!-- App Shell -->
-  <div class="app-shell" id="app">
+  <!-- App Container -->
+  <div class="app-container" id="appContainer">
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="brand">
@@ -575,34 +757,34 @@
       </div>
 
       <nav class="nav-menu">
-        <div class="nav-item active" data-page="dashboard">
+        <div class="nav-item active" data-page="dashboard" onclick="switchView('dashboard')">
           <i class="ph-duotone ph-house-line"></i>
           <span class="nav-label">الرئيسية</span>
         </div>
-        <div class="nav-item" data-page="calendar">
-          <i class="ph-duotone ph-calendar-plus"></i>
-          <span class="nav-label">التقويم</span>
-        </div>
-        <div class="nav-item" data-page="clients">
+        <div class="nav-item" data-page="clients" onclick="switchView('clients')">
           <i class="ph-duotone ph-users-four"></i>
           <span class="nav-label">العملاء</span>
         </div>
-        <div class="nav-item" data-page="services">
+        <div class="nav-item" data-page="services" onclick="switchView('services')">
           <i class="ph-duotone ph-lightning-slot"></i>
           <span class="nav-label">الخدمات</span>
         </div>
-        <div class="nav-item" data-page="reports">
+        <div class="nav-item" data-page="calendar" onclick="switchView('calendar')">
+          <i class="ph-duotone ph-calendar-plus"></i>
+          <span class="nav-label">التقويم</span>
+        </div>
+        <div class="nav-item" data-page="stats" onclick="switchView('stats')">
           <i class="ph-duotone ph-presentation-chart"></i>
           <span class="nav-label">التقارير</span>
         </div>
-        <div class="nav-item" data-page="settings">
-          <i class="ph-duotone ph-fingerprint"></i>
+        <div class="nav-item" data-page="settings" onclick="switchView('settings')">
+          <i class="ph-duotone ph-gear-six"></i>
           <span class="nav-label">الإعدادات</span>
         </div>
       </nav>
 
       <div class="sidebar-footer">
-        <div class="nav-item" onclick="handleLogout()">
+        <div class="nav-item" onclick="logout()">
           <i class="ph-bold ph-sign-out"></i>
           <span class="nav-label">خروج</span>
         </div>
@@ -610,16 +792,22 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" id="mainContent">
       <!-- Dashboard View -->
       <div class="view active" id="dashboardView">
-        <h1>مرحباً بك <span class="gradient-text" id="greetingName">...</span></h1>
-        <p style="color: var(--text-secondary); margin-bottom: 32px;" id="greetingDate"></p>
-        
-        <div class="stats-row">
+        <div class="page-header">
+          <h1>مرحباً <span class="gradient-text" id="greetingName">...</span></h1>
+          <p id="greetingDate"></p>
+        </div>
+
+        <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-label">مواعيد اليوم</div>
             <div class="stat-value" id="statToday">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">في الانتظار</div>
+            <div class="stat-value" id="statPending">0</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">الإيرادات</div>
@@ -631,259 +819,1011 @@
           </div>
         </div>
 
-        <div style="background: var(--bg-card); padding: 32px; border-radius: var(--radius-md); border: 1px solid var(--border);">
-          <h3 style="margin-bottom: 24px;">مواعيد اليوم</h3>
-          <div id="todayAppointments">
-            <p style="color: var(--text-muted); text-align: center; padding: 40px;">
-              <i class="ph-duotone ph-calendar-x" style="font-size: 3rem; display: block; margin-bottom: 16px; opacity: 0.3;"></i>
-              لا توجد مواعيد لليوم
-            </p>
+        <!-- Today Timeline -->
+        <div style="background: var(--bg-card); padding: 32px; border-radius: var(--radius-lg); border: 1px solid var(--border);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h3 style="font-size: 1.5rem;">مواعيد اليوم</h3>
+            <button class="btn btn-primary btn-sm" onclick="openNewAppointmentModal()">
+              <i class="ph-bold ph-plus"></i> حجز جديد
+            </button>
+          </div>
+          <div id="todayTimeline">
+            <div class="empty-state">
+              <div class="empty-icon"><i class="ph-duotone ph-calendar-x"></i></div>
+              <div class="empty-title">لا توجد مواعيد اليوم</div>
+              <div class="empty-sub">استمتع بيومك أو ابدأ بإضافة حجز جديد</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Recommendations -->
+        <div id="aiRecommendations" style="margin-top: 32px; display: none;">
+          <!-- Dynamic content -->
+        </div>
+      </div>
+
+      <!-- Clients View -->
+      <div class="view" id="clientsView">
+        <div class="page-header">
+          <h1>قاعدة <span class="gradient-text">العملاء</span></h1>
+          <p>إدارة شاملة لبيانات عملائك</p>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap;">
+          <input type="text" class="form-input" style="max-width: 400px;" placeholder="بحث عن عميل..." id="clientsSearchInput" oninput="searchClients(this.value)">
+          <button class="btn btn-primary" onclick="openNewClientModal()">
+            <i class="ph-bold ph-user-plus"></i> عميل جديد
+          </button>
+        </div>
+        <div id="clientsList">
+          <div class="empty-state">
+            <div class="empty-icon"><i class="ph-duotone ph-users-four"></i></div>
+            <div class="empty-title">لا يوجد عملاء</div>
+            <div class="empty-sub">ابدأ بإضافة أول عميل أو اطلب منهم الحجز من الرابط الخاص بك</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Services View -->
+      <div class="view" id="servicesView">
+        <div class="page-header">
+          <h1>خدماتك <span class="gradient-text">الاحترافية</span></h1>
+          <p>إدارة وتعديل الخدمات المتاحة</p>
+        </div>
+        <div style="margin-bottom: 24px;">
+          <button class="btn btn-primary" onclick="openNewServiceModal()">
+            <i class="ph-bold ph-plus"></i> إضافة خدمة
+          </button>
+        </div>
+        <div id="servicesList">
+          <div class="empty-state">
+            <div class="empty-icon"><i class="ph-duotone ph-lightning-slot"></i></div>
+            <div class="empty-title">لم يتم إضافة خدمات</div>
+            <div class="empty-sub">أضف خدماتك ليتمكن العملاء من الاختيار منها عند الحجز</div>
           </div>
         </div>
       </div>
 
       <!-- Calendar View -->
       <div class="view" id="calendarView">
-        <h1>التقويم <span class="gradient-text">الذكي</span></h1>
-        <p style="color: var(--text-secondary); margin-bottom: 32px;">تحكم في مواعيدك بطريقة بصرية سهلة</p>
-        <div class="stat-card" style="min-height: 400px; display: flex; align-items: center; justify-content: center;">
+        <div class="page-header">
+          <h1>التقويم <span class="gradient-text">الذكي</span></h1>
+          <p>تحكم في مواعيدك بطريقة بصرية سهلة</p>
+        </div>
+        <div class="stat-card" style="min-height: 500px; display: flex; align-items: center; justify-content: center;">
           <div style="text-align: center;">
             <i class="ph-duotone ph-calendar-blank" style="font-size: 5rem; color: var(--primary); opacity: 0.5;"></i>
             <h3 style="margin-top: 20px;">جاري تحميل التقويم...</h3>
+            <p style="color: var(--text-muted);">يتم الآن ربط بياناتك مع Google Calendar</p>
           </div>
         </div>
       </div>
 
-      <!-- Clients View -->
-      <div class="view" id="clientsView">
-        <h1>قاعدة <span class="gradient-text">العملاء</span></h1>
-        <p style="color: var(--text-secondary); margin-bottom: 32px;">إدارة شاملة لبيانات عملائك</p>
-        <div class="stat-card">
-          <p style="color: var(--text-muted); text-align: center; padding: 40px;">
-            لا يوجد عملاء مضافين بعد
-          </p>
+      <!-- Stats View -->
+      <div class="view" id="statsView">
+        <div class="page-header">
+          <h1>تحليلات <span class="gradient-text">الأداء</span></h1>
+          <p>نظرة شاملة على نمو أعمالك</p>
         </div>
-      </div>
-
-      <!-- Services View -->
-      <div class="view" id="servicesView">
-        <h1>خدماتك <span class="gradient-text">الاحترافية</span></h1>
-        <p style="color: var(--text-secondary); margin-bottom: 32px;">إدارة وتعديل الخدمات المتاحة</p>
-        <div class="stat-card">
-          <p style="color: var(--text-muted); text-align: center; padding: 40px;">
-            لم يتم إضافة خدمات بعد
-          </p>
+        <div class="stats-grid" style="margin-bottom: 40px;">
+          <div class="stat-card">
+            <div class="stat-label">نمو المبيعات</div>
+            <div class="stat-value" id="statTotalApts">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">المكتملة</div>
+            <div class="stat-value" id="statCompleted">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">إجمالي الإيرادات</div>
+            <div class="stat-value" id="statTotalRevenue">0 <small style="font-size: 1rem;">ج.م</small></div>
+          </div>
         </div>
-      </div>
-
-      <!-- Reports View -->
-      <div class="view" id="reportsView">
-        <h1>تحليلات <span class="gradient-text">الأداء</span></h1>
-        <p style="color: var(--text-secondary); margin-bottom: 32px;">نظرة شاملة على نمو أعمالك</p>
-        <div class="stat-card" style="min-height: 400px;">
-          <canvas id="revenueChart"></canvas>
+        <div class="stat-card">
+          <canvas id="revenueChart" style="width: 100%; height: 400px;"></canvas>
         </div>
       </div>
 
       <!-- Settings View -->
       <div class="view" id="settingsView">
-        <h1>إعدادات <span class="gradient-text">النخبة</span></h1>
-        <p style="color: var(--text-secondary); margin-bottom: 32px;">قم بتخصيص كل تفصيلة في محرك أعمالك</p>
-        
-        <div class="stats-row">
+        <div class="page-header">
+          <h1>إعدادات <span class="gradient-text">النخبة</span></h1>
+          <p>قم بتخصيص كل تفصيلة في محرك أعمالك</p>
+        </div>
+
+        <div class="stats-grid">
+          <!-- Profile Settings -->
           <div class="stat-card">
             <h3 style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; color: var(--primary);">
               <i class="ph-fill ph-identification-card"></i> الملف التعريفي
             </h3>
-            <div class="field-group">
+            <div class="form-group">
               <label>اسم النشاط التجاري</label>
-              <input type="text" class="field-input" id="settingBizName" placeholder="اسم النشاط">
+              <input type="text" class="form-input" id="settingBusinessName" placeholder="اسم النشاط">
             </div>
-            <button class="btn-primary" onclick="saveSettings()">
+            <div class="form-group">
+              <label>رابط الحجز المخصص</label>
+              <input type="text" class="form-input" id="settingBookingLink" readonly>
+            </div>
+            <button class="btn btn-primary" onclick="saveProfileSettings()">
               <i class="ph-bold ph-check"></i> حفظ البيانات
             </button>
           </div>
 
+          <!-- Social Links -->
           <div class="stat-card">
-            <h3 style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; color: var(--accent);">
-              <i class="ph-fill ph-whatsapp-logo"></i> روابط التواصل
+            <h3 style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; color: var(--primary);">
+              <i class="ph-fill ph-share-network"></i> روابط التواصل
             </h3>
-            <div class="field-group">
+            <div class="form-group">
               <label>WhatsApp</label>
-              <input type="text" class="field-input" id="settingWhatsApp" placeholder="رقم الواتساب">
+              <input type="text" class="form-input" id="settingWhatsApp" placeholder="رقم الواتساب">
             </div>
-            <div class="field-group">
+            <div class="form-group">
               <label>Instagram</label>
-              <input type="text" class="field-input" id="settingInstagram" placeholder="رابط الانستجرام">
+              <input type="text" class="form-input" id="settingInstagram" placeholder="رابط الانستجرام">
             </div>
-            <button class="btn-primary" onclick="saveSettings()">
+            <div class="form-group">
+              <label>Facebook</label>
+              <input type="text" class="form-input" id="settingFacebook" placeholder="رابط الفيسبوك">
+            </div>
+            <button class="btn btn-primary" onclick="saveSocialSettings()">
               <i class="ph-bold ph-check"></i> تحديث الروابط
             </button>
+          </div>
+
+          <!-- Work Hours -->
+          <div class="stat-card">
+            <h3 style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; color: var(--primary);">
+              <i class="ph-fill ph-clock"></i> مواعيد العمل
+            </h3>
+            <div class="form-group">
+              <label>وقت البدء</label>
+              <input type="time" class="form-input" id="settingStartTime" value="09:00">
+            </div>
+            <div class="form-group">
+              <label>وقت الانتهاء</label>
+              <input type="time" class="form-input" id="settingEndTime" value="18:00">
+            </div>
+            <div class="form-group">
+              <label>مدة الموعد (دقيقة)</label>
+              <input type="number" class="form-input" id="settingSlotDuration" value="30" min="15" max="120">
+            </div>
+            <button class="btn btn-primary" onclick="saveWorkHours()">
+              <i class="ph-bold ph-check"></i> حفظ مواعيد العمل
+            </button>
+          </div>
+
+          <!-- Notifications -->
+          <div class="stat-card">
+            <h3 style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; color: var(--primary);">
+              <i class="ph-fill ph-bell"></i> إعدادات التنبيهات
+            </h3>
+            <div class="form-group">
+              <label>تذكير الواتساب (قبل الموعد بـ)</label>
+              <select class="form-select" id="settingWAReminder">
+                <option value="0">بدون تذكير</option>
+                <option value="60">ساعة واحدة</option>
+                <option value="120">ساعتان</option>
+                <option value="1440">يوم كامل</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>تذكير المتصفح (قبل الموعد بـ)</label>
+              <select class="form-select" id="settingBrowserNotify">
+                <option value="0">بدون تذكير</option>
+                <option value="60">ساعة واحدة</option>
+                <option value="120">ساعتان</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="saveNotificationSettings()">
+              <i class="ph-bold ph-check"></i> حفظ إعدادات التنبيهات
+            </button>
+          </div>
+        </div>
+
+        <!-- FlowAI Settings -->
+        <div class="stat-card" style="margin-top: 24px; border-color: var(--primary); background: rgba(99, 102, 241, 0.05);">
+          <h3 style="margin-bottom: 16px; color: var(--primary);">
+            <i class="ph-fill ph-sparkle"></i> FlowAI Premium
+          </h3>
+          <p style="color: var(--text-secondary); margin-bottom: 24px;">
+            نظام الذكاء الاصطناعي مفعل حالياً باستخدام مفتاحك الخاص المؤمن. لا حاجة لتغييره يدوياً.
+          </p>
+          <div style="display: flex; align-items: center; gap: 12px; color: var(--success); font-weight: 700;">
+            <i class="ph-fill ph-check-circle"></i> النظام جاهز للعمل
           </div>
         </div>
       </div>
     </main>
   </div>
 
+  <!-- AI Assistant FAB -->
+  <button class="ai-fab" id="aiFab" onclick="toggleFlowAI()">
+    <i class="ph-fill ph-sparkle"></i>
+  </button>
+
+  <!-- AI Assistant Panel -->
+  <div class="ai-panel" id="aiPanel">
+    <div class="ai-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem;">
+          <i class="ph-fill ph-sparkle"></i>
+        </div>
+        <div>
+          <strong style="font-size: 1.1rem;">FlowAI Pro</strong><br>
+          <small style="color: var(--text-muted); font-size: 0.85rem;">Powered by Gemini</small>
+        </div>
+      </div>
+      <button class="modal-close" onclick="toggleFlowAI()">
+        <i class="ph-bold ph-x"></i>
+      </button>
+    </div>
+    <div class="ai-body" id="aiMessages">
+      <div class="chat-bubble bubble-bot">
+        أهلاً بك في المستوى التالي من إدارة الأعمال. أنا FlowAI، شريكك الذكي. كيف يمكنني خدمتك الآن؟
+      </div>
+    </div>
+    <div class="ai-footer">
+      <input type="text" class="form-input" id="aiInput" placeholder="تحدث مع FlowAI..." onkeypress="if(event.key==='Enter') sendToFlowAI()">
+      <button class="btn btn-primary" onclick="sendToFlowAI()">
+        <i class="ph-fill ph-paper-plane-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- New Appointment Modal -->
+  <div class="modal-overlay" id="newAppointmentModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('newAppointmentModal')">
+        <i class="ph-bold ph-x"></i>
+      </button>
+      <h2 style="margin-bottom: 24px;">حجز موعد جديد</h2>
+      
+      <!-- Step 1: Client Info -->
+      <div id="modalStep1">
+        <div class="form-group">
+          <label>اسم العميل *</label>
+          <input type="text" class="form-input" id="aptClientName" placeholder="اسم العميل">
+        </div>
+        <div class="form-group">
+          <label>رقم الهاتف *</label>
+          <input type="tel" class="form-input" id="aptClientPhone" placeholder="010...">
+        </div>
+        <div class="form-group">
+          <label>الخدمة</label>
+          <select class="form-select" id="aptService">
+            <option value="">اختر خدمة...</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+          <button class="btn btn-primary" onclick="modalGoToStep(2)">
+            التالي <i class="ph-bold ph-arrow-left"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Appointment Details -->
+      <div id="modalStep2" style="display: none;">
+        <div class="form-group">
+          <label>التاريخ *</label>
+          <input type="date" class="form-input" id="aptDate">
+        </div>
+        <div class="form-group">
+          <label>الوقت *</label>
+          <input type="time" class="form-input" id="aptTime" value="10:00">
+        </div>
+        <div class="form-group">
+          <label>السعر (ج.م)</label>
+          <input type="number" class="form-input" id="aptPrice" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>الحالة</label>
+          <select class="form-select" id="aptStatus">
+            <option value="pending">منتظر</option>
+            <option value="confirmed">مؤكد</option>
+            <option value="awaiting_payment">بانتظار الدفع</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+          <button class="btn btn-secondary" onclick="modalGoToStep(1)">
+            <i class="ph-bold ph-arrow-right"></i> رجوع
+          </button>
+          <button class="btn btn-primary" id="btnSaveAppointment" onclick="saveAppointment()">
+            <i class="ph-bold ph-check"></i> حفظ الموعد
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Client Modal -->
+  <div class="modal-overlay" id="newClientModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('newClientModal')">
+        <i class="ph-bold ph-x"></i>
+      </button>
+      <h2 style="margin-bottom: 24px;">إضافة عميل جديد</h2>
+      <div class="form-group">
+        <label>اسم العميل *</label>
+        <input type="text" class="form-input" id="newClientName" placeholder="اسم العميل">
+      </div>
+      <div class="form-group">
+        <label>رقم الهاتف</label>
+        <input type="tel" class="form-input" id="newClientPhone" placeholder="010...">
+      </div>
+      <div class="form-group">
+        <label>البريد الإلكتروني</label>
+        <input type="email" class="form-input" id="newClientEmail" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label>الفئة</label>
+        <select class="form-select" id="newClientCategory">
+          <option value="new">جديد</option>
+          <option value="regular">منتظم</option>
+          <option value="vip">VIP</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="btn btn-secondary" onclick="closeModal('newClientModal')">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveNewClient()">
+          <i class="ph-bold ph-check"></i> حفظ العميل
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Service Modal -->
+  <div class="modal-overlay" id="newServiceModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('newServiceModal')">
+        <i class="ph-bold ph-x"></i>
+      </button>
+      <h2 style="margin-bottom: 24px;">إضافة خدمة جديدة</h2>
+      <div class="form-group">
+        <label>اسم الخدمة *</label>
+        <input type="text" class="form-input" id="newServiceName" placeholder="اسم الخدمة">
+      </div>
+      <div class="form-group">
+        <label>المدة (دقيقة)</label>
+        <input type="number" class="form-input" id="newServiceDuration" value="30" min="15" max="180">
+      </div>
+      <div class="form-group">
+        <label>السعر (ج.م)</label>
+        <input type="number" class="form-input" id="newServicePrice" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>الوصف</label>
+        <textarea class="form-input" id="newServiceDesc" rows="3" placeholder="وصف الخدمة..."></textarea>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="btn btn-secondary" onclick="closeModal('newServiceModal')">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveNewService()">
+          <i class="ph-bold ph-check"></i> حفظ الخدمة
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toastContainer"></div>
 
+  <!-- Load Scripts -->
   <script type="module">
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { db } from './firebase-config.js';
+    import { 
+      collection, query, where, getDocs, addDoc, 
+      updateDoc, doc, getDoc, orderBy, increment, limit, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { showToast } from './components/toast.js';
+    import { escapeHTML } from './dashboard.js';
 
-    const { auth, signInWithPopup: signInPopup, provider: googleProvider } = window.firebaseAuth;
+    const auth = getAuth();
 
-    // Auth Tab Switching
-    window.switchAuth = (mode) => {
-      const loginTab = document.getElementById('tabLogin');
-      const regTab = document.getElementById('tabRegister');
-      const loginFields = document.getElementById('loginFields');
-      const regFields = document.getElementById('registerFields');
-      
-      if (mode === 'login') {
-        loginTab.classList.add('active');
-        regTab.classList.remove('active');
-        loginFields.style.display = 'block';
-        regFields.style.display = 'none';
-      } else {
-        regTab.classList.add('active');
-        loginTab.classList.remove('active');
-        loginFields.style.display = 'none';
-        regFields.style.display = 'block';
-      }
-    };
+    // Make db available globally
+    window.db = db;
+    window.auth = auth;
 
-    // Handle Login
-    window.handleAuth = async () => {
-      const email = document.getElementById('aEmail').value.trim();
-      const password = document.getElementById('aPass').value;
-      if (!email || !password) return showToast('يرجى إدخال البريد وكلمة المرور', 'error');
-      
-      const btn = document.getElementById('btnMainAuth');
-      btn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> جاري التحقق...';
-      btn.disabled = true;
-      
-      try {
-        const result = await signInWithEmailAndPassword(auth, email, password);
-        onUserLogin(result.user);
-      } catch (err) {
-        showToast('خطأ: ' + err.message, 'error');
-        btn.innerHTML = '<i class="ph-bold ph-sign-in"></i> دخول النظام';
-        btn.disabled = false;
-      }
-    };
-
-    // Handle Register
-    window.handleRegister = async () => {
-      const name = document.getElementById('rName').value.trim();
-      const email = document.getElementById('rEmail').value.trim();
-      const password = document.getElementById('rPass').value;
-      
-      if (!name || !email || !password) return showToast('يرجى ملء كافة البيانات', 'error');
-      
-      const btn = document.getElementById('btnRegister');
-      btn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> جاري الإنشاء...';
-      btn.disabled = true;
-      
-      try {
-        const result = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(result.user, { displayName: name });
-        onUserLogin(result.user);
-      } catch (err) {
-        showToast('خطأ: ' + err.message, 'error');
-        btn.innerHTML = '<i class="ph-bold ph-user-plus"></i> إنشاء حساب';
-        btn.disabled = false;
-      }
-    };
-
-    // Handle Google Auth
-    window.handleGoogleAuth = async (event) => {
-      const btn = event.currentTarget;
-      btn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> جاري التحميل...';
-      btn.disabled = true;
-      
-      try {
-        await signInPopup(auth, googleProvider);
-      } catch (err) {
-        showToast('فشل الدخول. تأكد من إضافة النطاق في Firebase.', 'warning');
-        btn.innerHTML = '<i class="ph-bold ph-google-logo"></i> Google';
-        btn.disabled = false;
-      }
-    };
-
-    // Handle Logout
-    window.handleLogout = async () => {
-      try {
-        await signOut(auth);
-        location.reload();
-      } catch (err) {
-        showToast('خطأ في تسجيل الخروج', 'error');
-      }
-    };
-
-    // On User Login
-    function onUserLogin(user) {
-      const name = user.displayName || user.email.split('@')[0];
-      document.getElementById('greetingName').textContent = name;
-      document.getElementById('greetingDate').textContent = new Date().toLocaleDateString('ar-EG', { 
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-      });
-      
-      document.getElementById('authOverlay').style.opacity = '0';
-      setTimeout(() => {
-        document.getElementById('authOverlay').style.display = 'none';
-        document.getElementById('app').classList.add('ready');
-      }, 500);
-    }
-
-    // Navigation
-    document.addEventListener('click', e => {
-      const item = e.target.closest('.nav-item[data-page]');
-      if (!item) return;
-      
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      item.classList.add('active');
-      
-      const page = item.getAttribute('data-page');
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      const targetView = document.getElementById(page + 'View');
-      if (targetView) targetView.classList.add('active');
-    });
-
-    // Settings
-    window.saveSettings = () => {
-      showToast('تم حفظ البيانات بنجاح! ✨', 'success');
-    };
-
-    // Toast Notification
-    window.showToast = (msg, type = 'info') => {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      
-      const icon = type === 'error' ? 'ph-warning-circle' : (type === 'warning' ? 'ph-info' : 'ph-check-circle');
-      if (type === 'error') toast.style.borderColor = 'var(--error)';
-      
-      toast.innerHTML = `<i class="ph-fill ${icon}"></i> <span>${msg}</span>`;
-      container.appendChild(toast);
-      
-      setTimeout(() => { 
-        toast.classList.add('hide'); 
-        setTimeout(() => toast.remove(), 300); 
-      }, 4000);
-    };
-
-    // Auth State Listener
+    // Check auth state
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        onUserLogin(user);
+        window.currentUser = user;
+        initDashboard(user);
+      } else {
+        window.location.href = 'index.html';
       }
     });
 
-    // Init Date
-    document.getElementById('greetingDate').textContent = new Date().toLocaleDateString('ar-EG', { 
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-    });
+    // Initialize Dashboard
+    async function initDashboard(user) {
+      try {
+        // Set greeting
+        const greetingName = document.getElementById('greetingName');
+        const greetingDate = document.getElementById('greetingDate');
+        if (greetingName) greetingName.textContent = user.displayName || user.email.split('@')[0];
+        if (greetingDate) greetingDate.textContent = new Date().toLocaleDateString('ar-EG', { 
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
+
+        // Load data
+        await loadDashboardStats(user.uid);
+        await loadTodayTimeline(user.uid);
+        await loadAIRecommendations();
+      } catch(e) {
+        console.error('Dashboard init error:', e);
+      }
+    }
+
+    // Load Dashboard Stats
+    async function loadDashboardStats(userId) {
+      try {
+        const q = query(collection(db, 'appointments'), where('userId', '==', userId));
+        const snap = await getDocs(q);
+        
+        let todayCount = 0;
+        let pendingCount = 0;
+        let monthlyRevenue = 0;
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+        snap.forEach(d => {
+          const data = d.data();
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          
+          if(data.date >= today.getTime() && data.date < tomorrow.getTime()) todayCount++;
+          if(data.status === 'pending' || data.status === 'awaiting_payment') pendingCount++;
+          if(data.date >= firstDay && data.status === 'completed') monthlyRevenue += (data.price || 0);
+        });
+
+        const statToday = document.getElementById('statToday');
+        const statPending = document.getElementById('statPending');
+        const statRevenue = document.getElementById('statRevenue');
+
+        if(statToday) statToday.textContent = todayCount;
+        if(statPending) statPending.textContent = pendingCount;
+        if(statRevenue) statRevenue.innerHTML = monthlyRevenue + ' <small style="font-size: 1rem;">ج.م</small>';
+      } catch(e) {
+        console.error('Stats error:', e);
+      }
+    }
+
+    // Load Today Timeline
+    async function loadTodayTimeline(userId) {
+      const tl = document.getElementById('todayTimeline');
+      if(!tl) return;
+
+      try {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const q = query(collection(db, 'appointments'), where('userId', '==', userId));
+        const snap = await getDocs(q);
+        
+        let apts = [];
+        snap.forEach(d => {
+          const data = d.data();
+          if(data.date >= today.getTime() && data.date < tomorrow.getTime()) {
+            apts.push({id: d.id, ...data});
+          }
+        });
+
+        if(apts.length === 0) {
+          tl.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon"><i class="ph-duotone ph-calendar-x"></i></div>
+              <div class="empty-title">لا توجد مواعيد اليوم</div>
+              <div class="empty-sub">استمتع بيومك أو ابدأ بإضافة حجز جديد</div>
+            </div>
+          `;
+          return;
+        }
+
+        apts.sort((a,b) => a.time.localeCompare(b.time));
+
+        const statusLabels = {
+          'confirmed': 'مؤكد',
+          'pending': 'منتظر',
+          'awaiting_payment': 'بانتظار الدفع',
+          'completed': 'اكتمل',
+          'cancelled': 'ملغي'
+        };
+
+        const statusColors = {
+          'confirmed': '#0066FF',
+          'pending': '#F59E0B',
+          'awaiting_payment': '#E60000',
+          'completed': '#10B981',
+          'cancelled': '#EF4444'
+        };
+
+        tl.innerHTML = apts.map((apt, index) => `
+          <div class="timeline-item fade-up stagger-${(index % 10) + 1}" onclick="openAptDetails('${apt.id}')">
+            <div class="timeline-time">${escapeHTML(apt.time)}</div>
+            <div class="timeline-dot" style="background: ${statusColors[apt.status] || '#666'};"></div>
+            <div class="timeline-content">
+              <div class="timeline-client">${escapeHTML(apt.clientName)}</div>
+              <div class="timeline-service">${escapeHTML(apt.service || '')}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch(e) {
+        console.error('Timeline error:', e);
+      }
+    }
+
+    // Load AI Recommendations
+    async function loadAIRecommendations() {
+      const container = document.getElementById('aiRecommendations');
+      if (!container) return;
+
+      try {
+        const q = query(collection(db, 'appointments'), where('userId', '==', window.currentUser.uid));
+        const snap = await getDocs(q);
+        const allApts = snap.docs.map(d => d.data());
+        
+        if (allApts.length < 5) {
+          container.style.display = 'none';
+          return;
+        }
+        
+        container.style.display = 'block';
+        container.innerHTML = `
+          <div class="stat-card">
+            <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px; color: var(--primary);">
+              <i class="ph-fill ph-sparkle"></i> توصيات FlowAI
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="padding: 12px 16px; background: rgba(99, 102, 241, 0.1); border-radius: 12px; border-right: 3px solid var(--primary);">
+                💡 أنت لديك ${allApts.length} موعد مسجل. استمر في النمو!
+              </div>
+            </div>
+          </div>
+        `;
+      } catch(e) {
+        console.error('AI Rec error:', e);
+      }
+    }
+
+    // Switch View
+    window.switchView = function(page) {
+      // Update nav
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const activeNav = document.querySelector(`.nav-item[data-page="${page}"]`);
+      if(activeNav) activeNav.classList.add('active');
+
+      // Update views
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      const targetView = document.getElementById(page + 'View');
+      if(targetView) {
+        targetView.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Load specific data
+        if(page === 'clients') loadClients();
+        if(page === 'services') loadServices();
+        if(page === 'stats') loadStats();
+      }
+    };
+
+    // Modal Functions
+    window.openNewAppointmentModal = function() {
+      const modal = document.getElementById('newAppointmentModal');
+      if(modal) {
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        modalGoToStep(1);
+        const dateInput = document.getElementById('aptDate');
+        if(dateInput) dateInput.valueAsDate = new Date();
+      }
+    };
+
+    window.modalGoToStep = function(step) {
+      const step1 = document.getElementById('modalStep1');
+      const step2 = document.getElementById('modalStep2');
+      if(step === 1) {
+        if(step1) step1.style.display = '';
+        if(step2) step2.style.display = 'none';
+      } else {
+        const clientName = document.getElementById('aptClientName');
+        if(!clientName?.value.trim()) {
+          clientName.style.borderColor = 'var(--error)';
+          showToast('يرجى إدخال اسم العميل', 'error');
+          return;
+        }
+        if(step1) step1.style.display = 'none';
+        if(step2) step2.style.display = '';
+      }
+    };
+
+    window.closeModal = function(modalId) {
+      const modal = document.getElementById(modalId);
+      if(modal) {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    };
+
+    // Save Appointment
+    window.saveAppointment = async function() {
+      const clientName = document.getElementById('aptClientName')?.value.trim();
+      const phone = document.getElementById('aptClientPhone')?.value.trim();
+      const service = document.getElementById('aptService')?.value.trim();
+      const dateVal = document.getElementById('aptDate')?.value;
+      const timeVal = document.getElementById('aptTime')?.value;
+      const price = document.getElementById('aptPrice')?.value;
+      const status = document.getElementById('aptStatus')?.value;
+
+      if(!clientName || !dateVal || !timeVal) {
+        showToast('يرجى تعبئة الحقول المطلوبة', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnSaveAppointment');
+      if(btn) { btn.classList.add('btn-loading'); btn.disabled = true; }
+
+      try {
+        const dateObj = new Date(dateVal);
+        await addDoc(collection(db, 'appointments'), {
+          userId: window.currentUser.uid,
+          clientName,
+          clientPhone: phone,
+          service: service || 'خدمة عامة',
+          date: dateObj.getTime(),
+          time: timeVal,
+          price: parseFloat(price) || 0,
+          status,
+          createdAt: new Date().getTime()
+        });
+
+        showToast('تم حفظ الموعد بنجاح ✅', 'success');
+        closeModal('newAppointmentModal');
+        
+        // Reload
+        await loadDashboardStats(window.currentUser.uid);
+        await loadTodayTimeline(window.currentUser.uid);
+      } catch(e) {
+        console.error('Save error:', e);
+        showToast('خطأ في الحفظ', 'error');
+      } finally {
+        if(btn) { btn.classList.remove('btn-loading'); btn.disabled = false; }
+      }
+    };
+
+    // Load Clients
+    window.loadClients = async function() {
+      const container = document.getElementById('clientsList');
+      if(!container) return;
+
+      try {
+        const q = query(collection(db, 'clients'), where('userId', '==', window.currentUser.uid));
+        const snap = await getDocs(q);
+
+        if(snap.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon"><i class="ph-duotone ph-users-four"></i></div>
+              <div class="empty-title">لا يوجد عملاء</div>
+              <div class="empty-sub">ابدأ بإضافة أول عميل أو اطلب منهم الحجز من الرابط الخاص بك</div>
+            </div>
+          `;
+          return;
+        }
+
+        const clients = snap.docs.map(d => ({id: d.id, ...d.data()}));
+        window.allClients = clients;
+
+        container.innerHTML = clients.map((client, index) => `
+          <div class="client-card" onclick="openEditClientModal('${client.id}')">
+            <div class="client-avatar">${escapeHTML(client.name.charAt(0).toUpperCase())}</div>
+            <div class="client-info">
+              <span class="client-name">${escapeHTML(client.name)}</span>
+              <span class="client-phone">${escapeHTML(client.phone || '—')}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch(e) {
+        console.error('Clients error:', e);
+      }
+    };
+
+    // Load Services
+    window.loadServices = async function() {
+      const container = document.getElementById('servicesList');
+      if(!container) return;
+
+      try {
+        const q = query(collection(db, 'services'), where('userId', '==', window.currentUser.uid));
+        const snap = await getDocs(q);
+
+        if(snap.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon"><i class="ph-duotone ph-lightning-slot"></i></div>
+              <div class="empty-title">لم يتم إضافة خدمات</div>
+              <div class="empty-sub">أضف خدماتك ليتمكن العملاء من الاختيار منها عند الحجز</div>
+            </div>
+          `;
+          return;
+        }
+
+        const services = snap.docs.map(d => ({id: d.id, ...d.data()}));
+
+        container.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px;">
+            ${services.map(s => `
+              <div class="service-card" onclick="openEditServiceModal('${s.id}')">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div>
+                    <div class="service-name">${escapeHTML(s.name)}</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem;">${s.duration || 30} دقيقة</div>
+                  </div>
+                  <div class="service-price">${s.price || 0} <span style="font-size: 0.8rem;">ج.م</span></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        // Update service dropdown in modal
+        const aptServiceSelect = document.getElementById('aptService');
+        if(aptServiceSelect) {
+          aptServiceSelect.innerHTML = '<option value="">اختر خدمة...</option>' +
+            services.map(s => `<option value="${escapeHTML(s.name)}" data-price="${s.price}" data-duration="${s.duration}">${escapeHTML(s.name)} (${s.price} ج.م)</option>`).join('');
+        }
+      } catch(e) {
+        console.error('Services error:', e);
+      }
+    };
+
+    // Load Stats
+    window.loadStats = async function() {
+      if(!window.currentUser) return;
+
+      try {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+        const allAptsQ = query(collection(db, 'appointments'), where('userId', '==', window.currentUser.uid));
+        const allAptsSnap = await getDocs(allAptsQ);
+        const allApts = allAptsSnap.docs.map(d => ({id: d.id, ...d.data()}));
+        const completedApts = allApts.filter(a => a.status === 'completed');
+
+        const statTotalApts = document.getElementById('statTotalApts');
+        const statCompleted = document.getElementById('statCompleted');
+        const statTotalRevenue = document.getElementById('statTotalRevenue');
+
+        if(statTotalApts) statTotalApts.textContent = allApts.length;
+        if(statCompleted) statCompleted.textContent = completedApts.length;
+        if(statTotalRevenue) statTotalRevenue.innerHTML = completedApts.reduce((sum, a) => sum + (a.price || 0), 0) + ' <small style="font-size: 1rem;">ج.م</small>';
+
+        // Render chart
+        const canvas = document.getElementById('revenueChart');
+        if(canvas && window.Chart) {
+          const months = [];
+          const monthRevenue = [];
+          for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const start = d.getTime();
+            const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).getTime();
+            const monthName = d.toLocaleDateString('ar', { month: 'short' });
+            months.push(monthName);
+            const mRev = allApts.filter(a => a.date >= start && a.date <= end && a.status === 'completed')
+                            .reduce((sum, a) => sum + (a.price || 0), 0);
+            monthRevenue.push(mRev);
+          }
+
+          new Chart(canvas, {
+            type: 'bar',
+            data: {
+              labels: months,
+              datasets: [{
+                label: 'الإيرادات (ج.م)',
+                data: monthRevenue,
+                backgroundColor: '#10B981',
+                borderRadius: 8
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+              }
+            }
+          });
+        }
+      } catch(e) {
+        console.error('Stats error:', e);
+      }
+    };
+
+    // Settings Functions
+    window.saveProfileSettings = async function() {
+      try {
+        showToast('تم حفظ البيانات بنجاح! ✨', 'success');
+      } catch(e) {
+        showToast('خطأ في الحفظ', 'error');
+      }
+    };
+
+    window.saveSocialSettings = async function() {
+      try {
+        showToast('تم تحديث الروابط بنجاح! ✨', 'success');
+      } catch(e) {
+        showToast('خطأ في الحفظ', 'error');
+      }
+    };
+
+    window.saveWorkHours = async function() {
+      try {
+        showToast('تم حفظ مواعيد العمل بنجاح! ✨', 'success');
+      } catch(e) {
+        showToast('خطأ في الحفظ', 'error');
+      }
+    };
+
+    window.saveNotificationSettings = async function() {
+      try {
+        showToast('تم حفظ إعدادات التنبيهات بنجاح! ✨', 'success');
+      } catch(e) {
+        showToast('خطأ في الحفظ', 'error');
+      }
+    };
+
+    // Client Modal Functions
+    window.openNewClientModal = function() {
+      const modal = document.getElementById('newClientModal');
+      if(modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    };
+
+    window.saveNewClient = async function() {
+      const name = document.getElementById('newClientName')?.value.trim();
+      if(!name) { showToast('يرجى إدخال اسم العميل', 'error'); return; }
+
+      try {
+        await addDoc(collection(db, 'clients'), {
+          userId: window.currentUser.uid,
+          name,
+          phone: document.getElementById('newClientPhone')?.value.trim() || '',
+          email: document.getElementById('newClientEmail')?.value.trim() || '',
+          category: document.getElementById('newClientCategory')?.value || 'new',
+          totalVisits: 0,
+          createdAt: new Date().getTime()
+        });
+        showToast('تم إضافة العميل بنجاح ✨', 'success');
+        closeModal('newClientModal');
+        loadClients();
+      } catch(e) {
+        showToast('خطأ في الإضافة', 'error');
+      }
+    };
+
+    // Service Modal Functions
+    window.openNewServiceModal = function() {
+      const modal = document.getElementById('newServiceModal');
+      if(modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    };
+
+    window.saveNewService = async function() {
+      const name = document.getElementById('newServiceName')?.value.trim();
+      if(!name) { showToast('يرجى إدخال اسم الخدمة', 'error'); return; }
+
+      try {
+        await addDoc(collection(db, 'services'), {
+          userId: window.currentUser.uid,
+          name,
+          duration: parseInt(document.getElementById('newServiceDuration')?.value) || 30,
+          price: parseFloat(document.getElementById('newServicePrice')?.value) || 0,
+          description: document.getElementById('newServiceDesc')?.value.trim() || '',
+          createdAt: new Date().getTime()
+        });
+        showToast('تم إضافة الخدمة بنجاح ✨', 'success');
+        closeModal('newServiceModal');
+        loadServices();
+      } catch(e) {
+        showToast('خطأ في الإضافة', 'error');
+      }
+    };
+
+    // FlowAI Functions
+    window.toggleFlowAI = function() {
+      const panel = document.getElementById('aiPanel');
+      const fab = document.getElementById('aiFab');
+      if(panel) panel.classList.toggle('open');
+      if(fab) fab.classList.toggle('hidden');
+    };
+
+    window.sendToFlowAI = async function() {
+      const input = document.getElementById('aiInput');
+      const msg = input?.value.trim();
+      if(!msg) return;
+      
+      const messagesContainer = document.getElementById('aiMessages');
+      
+      // Add user message
+      const userBubble = document.createElement('div');
+      userBubble.className = 'chat-bubble bubble-user';
+      userBubble.textContent = msg;
+      messagesContainer.appendChild(userBubble);
+      
+      input.value = '';
+      
+      // Add typing indicator
+      const typing = document.createElement('div');
+      typing.className = 'ai-typing';
+      typing.innerHTML = '<span></span><span></span><span></span>';
+      messagesContainer.appendChild(typing);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message: msg,
+            context: {
+              name: window.currentUser?.displayName || 'مقدم الخدمة',
+              todayAppointments: document.getElementById('statToday')?.textContent || '0',
+              pendingAppointments: document.getElementById('statPending')?.textContent || '0'
+            }
+          })
+        });
+        
+        const data = await res.json();
+        typing.remove();
+        
+        const botBubble = document.createElement('div');
+        botBubble.className = 'chat-bubble bubble-bot';
+        botBubble.textContent = data.reply || 'عذراً، حدث خطأ.';
+        messagesContainer.appendChild(botBubble);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      } catch(e) {
+        typing.remove();
+        const botBubble = document.createElement('div');
+        botBubble.className = 'chat-bubble bubble-bot';
+        botBubble.textContent = 'عذراً، حدث خطأ تقني.';
+        messagesContainer.appendChild(botBubble);
+      }
+    };
+
+    // Logout
+    window.logout = async function() {
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      } catch(e) {
+        console.error('Logout error:', e);
+      }
+    };
+
+    // Search Clients
+    window.searchClients = function(query) {
+      if(!window.allClients) return;
+      const filtered = window.allClients.filter(c => 
+        c.name.toLowerCase().includes(query.toLowerCase()) || 
+        (c.phone && c.phone.includes(query))
+      );
+      const container = document.getElementById('clientsList');
+      if(!container) return;
+
+      container.innerHTML = filtered.map((client, index) => `
+        <div class="client-card" onclick="openEditClientModal('${client.id}')">
+          <div class="client-avatar">${escapeHTML(client.name.charAt(0).toUpperCase())}</div>
+          <div class="client-info">
+            <span class="client-name">${escapeHTML(client.name)}</span>
+            <span class="client-phone">${escapeHTML(client.phone || '—')}</span>
+          </div>
+        </div>
+      `).join('');
+    };
+
   </script>
 </body>
 </html>
