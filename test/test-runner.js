@@ -1,9 +1,25 @@
+import { JSDOM } from 'jsdom';
+
+// Set up jsdom environment with a URL to avoid opaque origin issues
+const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://localhost' });
+global.window = dom.window;
+global.document = window.document;
+global.localStorage = window.localStorage;
+global.MouseEvent = window.MouseEvent;
+
 async function log(message){
   const pre = document.createElement('pre');
   pre.style.fontFamily = 'monospace';
   pre.style.fontSize = '12px';
   pre.textContent = message;
-  document.getElementById('test-log').appendChild(pre);
+  // Ensure test-log div exists
+  let testLogDiv = document.getElementById('test-log');
+  if (!testLogDiv) {
+    testLogDiv = document.createElement('div');
+    testLogDiv.id = 'test-log';
+    document.body.appendChild(testLogDiv);
+  }
+  testLogDiv.appendChild(pre);
   console.log(message);
 }
 

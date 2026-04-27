@@ -15,10 +15,16 @@ export const CONFIG = {
     }
   },
 
-  // Google Cloud Console: https://console.cloud.google.com/
+  // Google Cloud Console: https://console.cloud.google.com/apis/credentials
+  // 1. Create OAuth 2.0 Client ID (Web Application)
+  // 2. Add Authorized JavaScript origins:
+  //    - https://micro-saa-s-xi.vercel.app
+  //    - http://localhost:8000
+  //    - http://localhost:3000
+  // 3. Copy the Client ID below
   GOOGLE: {
-    CLIENT_ID: '621517712971-2jh1vrbvnb1eb2l51n54etsre59i6skc.apps.googleusercontent.com',
-    API_KEY: 'AIzaSyD_5G5R5R5R5R5R5R5R5R5R5R5R5R5',
+    CLIENT_ID: 'YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com', // Replace with your actual Client ID
+    API_KEY: 'YOUR_GOOGLE_API_KEY', // Optional: for Google Calendar API
     SCOPES: 'https://www.googleapis.com/auth/calendar.events'
   },
 
