@@ -778,27 +778,27 @@ document.getElementById('btnSaveNotifications')?.addEventListener('click', async
   btn.classList.add('btn-loading');
   
   try {
-    const waReminder = document.getElementById('settingWAReminder').value;
-    const browserNotify = document.getElementById('settingBrowserNotify').value;
-    const emailConfirm = document.getElementById('settingEmailConfirm').checked;
-    const vodafoneCash = document.getElementById('settingVodafoneCash').value;
-    const enableVodafone = document.getElementById('enableVodafoneCash').checked;
-    const stripeKey = document.getElementById('settingStripeKey').value;
-    const enableStripe = document.getElementById('enableStripe').checked;
+    const waReminder = document.getElementById('settingWAReminder')?.value || '0';
+    const browserNotify = document.getElementById('settingBrowserNotify')?.value || '0';
+    const smsNumber = document.getElementById('settingSMS')?.value || '';
     
+    // Update Firestore
     await updateDoc(doc(db, 'users', window.currentUser.uid), {
       'settings.notifications': {
         waReminder: parseInt(waReminder),
         browserNotify: parseInt(browserNotify),
-        emailConfirm
-      },
-      'settings.payment': {
-        vodafoneCash: vodafoneCash,
-        enableVodafoneCash: enableVodafone,
-        stripeKey,
-        enableStripe
+        smsNumber
       }
     });
+    
+    // Update current settings
+    if(!window.currentUserSettings) window.currentUserSettings = {};
+    if(!window.currentUserSettings.notifications) window.currentUserSettings.notifications = {};
+    window.currentUserSettings.notifications = {
+      waReminder: parseInt(waReminder),
+      browserNotify: parseInt(browserNotify),
+      smsNumber
+    };
     
     // Request browser notification permission if enabled
     if(parseInt(browserNotify) > 0) {
@@ -808,6 +808,7 @@ document.getElementById('btnSaveNotifications')?.addEventListener('click', async
     
     showToast('تم حفظ إعدادات الإشعارات', 'success');
   } catch(err) {
+    console.error('Notifications save error:', err);
     showToast('خطأ في الحفظ', 'error');
   } finally {
     btn.classList.remove('btn-loading');
@@ -1148,6 +1149,59 @@ window.deleteClient = async function() {
   }
 };
 
+// ==================== USER SETTINGS ====================
+async function loadCurrentUserSettings(userId) {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      window.currentUserSettings = userDoc.data()?.settings || {};
+      console.log('✅ User settings loaded:', window.currentUserSettings);
+      
+      // Update settings UI
+      const settings = window.currentUserSettings;
+      
+      // Profile
+      if (document.getElementById('settingBusinessName')) {
+        document.getElementById('settingBusinessName').value = settings?.businessName || '';
+        document.getElementById('settingBookingLink').value = settings?.bookingLink || '';
+      }
+      
+      // Social
+      if (settings?.social) {
+        if (document.getElementById('settingWhatsApp')) document.getElementById('settingWhatsApp').value = settings.social.whatsapp || '';
+        if (document.getElementById('settingInstagram')) document.getElementById('settingInstagram').value = settings.social.instagram || '';
+        if (document.getElementById('settingFacebook')) document.getElementById('settingFacebook').value = settings.social.facebook || '';
+      }
+      
+      // Work Hours
+      if (settings?.workHours) {
+        if (document.getElementById('settingStartTime')) document.getElementById('settingStartTime').value = settings.workHours.start || '09:00';
+        if (document.getElementById('settingEndTime')) document.getElementById('settingEndTime').value = settings.workHours.end || '18:00';
+        if (document.getElementById('settingSlotDuration')) document.getElementById('settingSlotDuration').value = settings.workHours.slotDuration || 30;
+      }
+      
+      // Payment
+      if (settings?.payments) {
+        if (document.getElementById('settingStripeKey')) document.getElementById('settingStripeKey').value = settings.payments.stripeKey || '';
+        if (document.getElementById('enableStripe')) document.getElementById('enableStripe').checked = settings.payments.enableStripe || false;
+        if (document.getElementById('settingVodafone')) document.getElementById('settingVodafone').value = settings.payments.vodafoneCash || '';
+        if (document.getElementById('enableVodafone')) document.getElementById('enableVodafone').checked = settings.payments.enableVodafone || false;
+        if (document.getElementById('settingPaymob')) document.getElementById('settingPaymob').value = settings.payments.paymobKey || '';
+        if (document.getElementById('enablePaymob')) document.getElementById('enablePaymob').checked = settings.payments.enablePaymob || false;
+      }
+      
+      // Notifications
+      if (settings?.notifications) {
+        if (document.getElementById('settingWAReminder')) document.getElementById('settingWAReminder').value = settings.notifications.waReminder || 0;
+        if (document.getElementById('settingBrowserNotify')) document.getElementById('settingBrowserNotify').value = settings.notifications.browserNotify || 0;
+        if (document.getElementById('settingSMS')) document.getElementById('settingSMS').value = settings.notifications.smsNumber || '';
+      }
+    }
+  } catch(e) {
+    console.error('Settings load error:', e);
+  }
+}
+
 // ==================== STATS ====================
 async function loadStats() {
   if(!window.currentUser) return;
@@ -1339,22 +1393,40 @@ async function loadWorkHours() {
 }
 
 document.getElementById('btnSavePayments')?.addEventListener('click', async () => {
-  const vcash = document.getElementById('settingVodafoneCash').value;
-  const enableVcash = document.getElementById('enableVodafoneCash').checked;
-  const stripeKey = document.getElementById('settingStripeKey').value;
-  const enableStripe = document.getElementById('enableStripe').checked;
+  const stripeKey = document.getElementById('settingStripeKey')?.value || '';
+  const enableStripe = document.getElementById('enableStripe')?.checked || false;
+  const vodafone = document.getElementById('settingVodafoneCash')?.value || '';
+  const enableVodafone = document.getElementById('enableVodafoneCash')?.checked || false;
+  const paymobKey = document.getElementById('settingPaymob')?.value || '';
+  const enablePaymob = document.getElementById('enablePaymob')?.checked || false;
 
   try {
     await updateDoc(doc(db, 'users', window.currentUser.uid), {
       'settings.payments': {
-        vodafoneCash: vcash,
-        enableVodafoneCash: enableVcash,
-        stripeKey: stripeKey,
-        enableStripe: enableStripe
+        stripeKey,
+        enableStripe,
+        vodafoneCash: vodafone,
+        enableVodafoneCash: enableVodafone,
+        paymobKey,
+        enablePaymob
       }
     });
-    showToast('تم حفظ إعدادات الدفع بنجاح', 'success');
+    
+    // Update current settings
+    if(!window.currentUserSettings) window.currentUserSettings = {};
+    if(!window.currentUserSettings.payments) window.currentUserSettings.payments = {};
+    window.currentUserSettings.payments = {
+      stripeKey,
+      enableStripe,
+      vodafoneCash: vodafone,
+      enableVodafoneCash: enableVodafone,
+      paymobKey,
+      enablePaymob
+    };
+    
+    showToast('تم حفظ إعدادات الدفع بنجاح ✅', 'success');
   } catch(e) {
+    console.error('Payment save error:', e);
     showToast('خطأ في الحفظ', 'error');
   }
 });
@@ -1652,62 +1724,123 @@ window.openImportClientsModal = function() {
 
 window.importClientsFromExcel = async function() {
   const fileInput = document.getElementById('importClientsFile');
-  const file = fileInput.files[0];
+  const file = fileInput?.files[0];
   if(!file) {
-    showToast('يرجى اختيار ملف', 'error');
+    showToast('يرجى اختيار ملف Excel', 'error');
     return;
   }
-  
+
   try {
     const text = await file.text();
     const lines = text.split('\n').filter(l => l.trim());
+    
     if(lines.length < 2) {
       showToast('الملف فارغ أو غير صالح', 'error');
       return;
     }
-    
+
     const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-    const nameIdx = headers.findIndex(h => h.includes('الاسم') || h.toLowerCase().includes('name'));
-    const phoneIdx = headers.findIndex(h => h.includes('الموبايل') || h.toLowerCase().includes('phone') || h.toLowerCase().includes('mobile'));
-    const emailIdx = headers.findIndex(h => h.includes('الإيميل') || h.toLowerCase().includes('email'));
-    const categoryIdx = headers.findIndex(h => h.includes('التصنيف') || h.toLowerCase().includes('category'));
-    const tagsIdx = headers.findIndex(h => h.includes('الوسوم') || h.toLowerCase().includes('tag'));
-    const notesIdx = headers.findIndex(h => h.includes('الملاحظات') || h.toLowerCase().includes('note'));
-    
-    if(nameIdx === -1) {
-      showToast('عمود "الاسم" غير موجود', 'error');
+    const nameIdx = headers.findIndex(h => h.includes('اسم') || h.toLowerCase().includes('name'));
+    const phoneIdx = headers.findIndex(h => h.includes('هاتف') || h.toLowerCase().includes('phone'));
+    const emailIdx = headers.findIndex(h => h.includes('بريد') || h.toLowerCase().includes('email'));
+    const categoryIdx = headers.findIndex(h => h.includes('فئة') || h.toLowerCase().includes('category'));
+    const tagsIdx = headers.findIndex(h => h.includes('وسوم') || h.toLowerCase().includes('tag'));
+    const notesIdx = headers.findIndex(h => h.includes('ملاحظات') || h.toLowerCase().includes('notes'));
+
+    if(nameIdx === -1 || phoneIdx === -1) {
+      showToast('الملف يجب أن يحتوي على اسم العميل ورقم الهاتف', 'error');
       return;
     }
-    
+
     let imported = 0;
     for(let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
-      const name = cols[nameIdx];
-      if(!name) continue;
-      
-      const phone = phoneIdx > -1 ? cols[phoneIdx] : '';
-      const email = emailIdx > -1 ? cols[emailIdx] : '';
-      const category = categoryIdx > -1 ? cols[categoryIdx].toLowerCase() : 'new';
-      const tags = tagsIdx > -1 && cols[tagsIdx] ? cols[tagsIdx].split(';').map(t => t.trim()).filter(Boolean) : [];
-      const notes = notesIdx > -1 ? cols[notesIdx] : '';
-      
-      await addDoc(collection(db, 'clients'), {
-        userId: window.currentUser.uid,
-        name, phone, email,
-        category: ['vip','regular','new','inactive'].includes(category) ? category : 'new',
-        tags, notes,
-        totalVisits: 0,
-        createdAt: new Date().getTime()
-      });
-      imported++;
+      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+      if(values.length < 2) continue;
+
+      const name = values[nameIdx];
+      const phone = values[phoneIdx];
+      if(!name || !phone) continue;
+
+      // Check if client exists
+      const existingClients = await getDocs(query(
+        collection(db, 'clients'),
+        where('userId', '==', window.currentUser.uid),
+        where('phone', '==', phone)
+      ));
+
+      if(existingClients.empty) {
+        await addDoc(collection(db, 'clients'), {
+          userId: window.currentUser.uid,
+          name,
+          phone,
+          email: emailIdx > -1 ? values[emailIdx] : '',
+          category: categoryIdx > -1 ? values[categoryIdx].toLowerCase() : 'new',
+          tags: tagsIdx > -1 && values[tagsIdx] ? values[tagsIdx].split(';').map(t => t.trim()).filter(Boolean) : [],
+          notes: notesIdx > -1 ? values[notesIdx] : '',
+          totalVisits: 0,
+          createdAt: Date.now()
+        });
+        imported++;
+      }
     }
-    
-    showToast(`تم استيراد ${imported} عميل`, 'success');
+
+    showToast(`تم استيراد ${imported} عميل بنجاح! ✅`, 'success');
     window.closeModal('importClientsModal');
-    fileInput.value = '';
     loadClients();
   } catch(e) {
-    console.error(e);
-    showToast('خطأ في الاستيراد', 'error');
+    console.error('Import error:', e);
+    showToast('خطأ في استيراد الملف', 'error');
+  }
+};
+
+// ==================== SAVE SMS SETTINGS ====================
+
+window.saveSmsSettings = async function() {
+  const twilioSid = document.getElementById('settingTwilioSid')?.value || '';
+  const twilioToken = document.getElementById('settingTwilioToken')?.value || '';
+  const smsPhone = document.getElementById('settingSmsPhone')?.value || '';
+  
+  try {
+    await updateDoc(doc(db, 'users', window.currentUser.uid), {
+      'settings.notifications.twilioSid': twilioSid,
+      'settings.notifications.twilioToken': twilioToken,
+      'settings.notifications.smsNumber': smsPhone
+    });
+    
+    // Update current settings
+    if(!window.currentUserSettings) window.currentUserSettings = {};
+    if(!window.currentUserSettings.notifications) window.currentUserSettings.notifications = {};
+    window.currentUserSettings.notifications.smsNumber = smsPhone;
+    
+    showToast('تم حفظ إعدادات SMS بنجاح! ✅', 'success');
+  } catch(e) {
+    console.error('SMS Settings error:', e);
+    showToast('خطأ في الحفظ', 'error');
+  }
+};
+
+// ==================== SAVE SMS SETTINGS ====================
+
+window.saveSmsSettings = async function() {
+  const twilioSid = document.getElementById('settingTwilioSid')?.value || '';
+  const twilioToken = document.getElementById('settingTwilioToken')?.value || '';
+  const smsPhone = document.getElementById('settingSmsPhone')?.value || '';
+  
+  try {
+    await updateDoc(doc(db, 'users', window.currentUser.uid), {
+      'settings.notifications.twilioSid': twilioSid,
+      'settings.notifications.twilioToken': twilioToken,
+      'settings.notifications.smsNumber': smsPhone
+    });
+    
+    // Update current settings
+    if(!window.currentUserSettings) window.currentUserSettings = {};
+    if(!window.currentUserSettings.notifications) window.currentUserSettings.notifications = {};
+    window.currentUserSettings.notifications.smsNumber = smsPhone;
+    
+    showToast('?? ??? ??????? SMS ?????! ?', 'success');
+  } catch(e) {
+    console.error('SMS Settings error:', e);
+    showToast('??? ?? ?????', 'error');
   }
 };

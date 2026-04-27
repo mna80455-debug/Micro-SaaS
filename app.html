@@ -639,19 +639,132 @@
             </button>
           </div>
 
+          <!-- Payment Gateways -->
+          <div class="stat-card">
+            <h3 style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; color: var(--primary);">
+              <i class="ph-fill ph-credit-card"></i> بوابات الدفع
+            </h3>
+            <div class="form-group">
+              <label>Stripe Publishable Key</label>
+              <input type="text" class="form-input" id="settingStripeKey" placeholder="pk_test_...">
+            </div>
+            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="enableStripe" style="width: 18px; height: 18px;">
+                <span>تفعيل Stripe</span>
+              </label>
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+            <div class="form-group">
+              <label>Vodafone Cash Number</label>
+              <input type="tel" class="form-input" id="settingVodafone" placeholder="010...">
+            </div>
+            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="enableVodafoneCash" style="width: 18px; height: 18px;">
+                <span>تفعيل فودافون كاش</span>
+              </label>
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+            <div class="form-group">
+              <label>Paymob API Key</label>
+              <input type="text" class="form-input" id="settingPaymob" placeholder="API Key...">
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="enablePaymob" style="width: 18px; height: 18px;">
+                <span>تفعيل Paymob</span>
+              </label>
+            </div>
+            <button class="btn-primary" style="margin-top: 24px; width: 100%;" onclick="savePaymentSettings()">
+              <i class="ph-bold ph-check"></i> حفظ بوابات الدفع
+            </button>
+          </div>
+
+          <!-- SMS Notifications -->
+          <div class="stat-card" style="margin-top: 24px;">
+            <h3 style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; color: var(--primary);">
+              <i class="ph-fill ph-chat-text"></i> إشعارات SMS
+            </h3>
+            <div class="form-group">
+              <label>Twilio Account SID</label>
+              <input type="text" class="form-input" id="settingTwilioSid" placeholder="AC...">
+            </div>
+            <div class="form-group">
+              <label>Twilio Auth Token</label>
+              <input type="password" class="form-input" id="settingTwilioToken" placeholder="...">
+            </div>
+            <div class="form-group">
+              <label>رقم SMS للتأكيد</label>
+              <input type="tel" class="form-input" id="settingSmsPhone" placeholder="+1234567890">
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="saveSmsSettings()">
+              <i class="ph-bold ph-check"></i> حفظ إعدادات SMS
+            </button>
+          </div>
+            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="enableStripe" style="width: 18px; height: 18px;">
+                <span>تفعيل Stripe</span>
+              </label>
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+            <div class="form-group">
+              <label>Vodafone Cash Number</label>
+              <input type="tel" class="form-input" id="settingVodafone" placeholder="010...">
+            </div>
+            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="enableVodafone" style="width: 18px; height: 18px;">
+                <span>تفعيل فودافون كاش</span>
+              </label>
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+            <div class="form-group">
+              <label>Paymob API Key</label>
+              <input type="text" class="form-input" id="settingPaymob" placeholder="API Key...">
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="enablePaymob" style="width: 18px; height: 18px;">
+                <span>تفعيل Paymob</span>
+              </label>
+            </div>
+            <button class="btn-primary" style="margin-top: 24px; width: 100%;" onclick="savePaymentSettings()">
+              <i class="ph-bold ph-check"></i> حفظ بوابات الدفع
+            </button>
+          </div>
+
           <!-- Notifications -->
           <div class="stat-card">
             <h3 style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; color: var(--primary);">
               <i class="ph-fill ph-bell"></i> إعدادات التنبيهات
             </h3>
-            <div class="field-group">
+            <div class="form-group">
               <label>تذكير الواتساب (قبل الموعد بـ)</label>
-              <select class="field-input" id="settingWAReminder">
+              <select class="form-select" id="settingWAReminder">
+                <option value="0">بدون تذكير</option>
+                <option value="60">ساعة واحدة</option>
+                <option value="120">ساعتان</option>
+                <option value="1440">يوم كامل</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>تذكير المتصفح (قبل الموعد بـ)</label>
+              <select class="form-select" id="settingBrowserNotify">
                 <option value="0">بدون تذكير</option>
                 <option value="60">ساعة واحدة</option>
                 <option value="120">ساعتان</option>
               </select>
             </div>
+            <div class="form-group">
+              <label>SMS Reminder (Twilio)</label>
+              <input type="text" class="form-input" id="settingSMS" placeholder="+1234567890">
+            </div>
+            <button class="btn-primary" onclick="saveNotificationSettings()">
+              <i class="ph-bold ph-check"></i> حفظ إعدادات التنبيهات
+            </button>
+          </div>
             <button class="btn-primary" onclick="saveNotificationSettings()">
               <i class="ph-bold ph-check"></i> حفظ إعدادات التنبيهات
             </button>
