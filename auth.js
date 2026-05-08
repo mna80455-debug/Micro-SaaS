@@ -21,6 +21,11 @@ onAuthStateChanged(auth, async (user) => {
   const authOverlay = getAuthOverlay();
   const appShell = getAppShell();
 
+  // Prevent auto-login flow during explicit registration
+  if (user && window.isRegistering) {
+    return;
+  }
+
   if (user) {
     window.currentUser = user;
     
@@ -203,13 +208,27 @@ const _handleRegister = async () => {
   const btn = document.getElementById('btnRegister');
   if(btn) btn.disabled = true;
   try {
+    window.isRegistering = true; // prevent auto-login in observer
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, 'users', result.user.uid), {
       profile: { name, email, createdAt: Date.now(), plan: 'free', businessName: '' },
       settings: { bookingLink: result.user.uid.substring(0, 8), slotDuration: 30 }
     });
-    showToast('تم إنشاء الحساب بنجاح 🎉', 'success');
+    
+    // Sign out immediately so they have to log in manually
+    await signOut(auth);
+    window.isRegistering = false;
+    
+    showToast('تم إنشاء الحساب بنجاح 🎉 برجاء تسجيل الدخول', 'success');
+    
+    // Switch to login tab
+    if (window.switchAuth) window.switchAuth('login');
+    // Pre-fill email
+    document.getElementById('aEmail').value = email;
+    document.getElementById('aPass').value = '';
+    
   } catch (error) {
+    window.isRegistering = false;
     const msgs = { 'auth/email-already-in-use': 'الإيميل مستخدم مسبقاً ❌', 'auth/weak-password': 'كلمة المرور ضعيفة جداً ❌', 'auth/invalid-email': 'إيميل غير صحيح ❌' };
     showToast(msgs[error.code] || 'خطأ: ' + error.code, 'error');
   } finally { if(btn) btn.disabled = false; }
