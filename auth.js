@@ -12,22 +12,28 @@ import {
 import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { showToast } from './components/toast.js';
 
-// DOM Elements
-const authOverlay = document.getElementById('authOverlay');
-const appShell = document.getElementById('app');
+// DOM Elements — resolved lazily to handle module load timing
+function getAuthOverlay() { return document.getElementById('authOverlay'); }
+function getAppShell() { return document.getElementById('app'); }
 
 // Auth State Observer
 onAuthStateChanged(auth, async (user) => {
+  const authOverlay = getAuthOverlay();
+  const appShell = getAppShell();
+
   if (user) {
     window.currentUser = user;
-    if (authOverlay) authOverlay.style.opacity = '0';
-    setTimeout(() => {
-        if (authOverlay) authOverlay.style.display = 'none';
-        if (appShell) {
-            appShell.style.display = 'flex';
-            setTimeout(() => appShell.classList.add('ready'), 50);
-        }
-    }, 500);
+    
+    // Hide auth, show app
+    if (authOverlay) {
+      authOverlay.style.opacity = '0';
+      authOverlay.style.pointerEvents = 'none';
+      setTimeout(() => { authOverlay.style.display = 'none'; }, 500);
+    }
+    if (appShell) {
+      appShell.style.display = 'flex';
+      setTimeout(() => appShell.classList.add('ready'), 50);
+    }
     
     // Create baseline profile if not exists
     await ensureUserProfile(user);
@@ -36,13 +42,16 @@ onAuthStateChanged(auth, async (user) => {
     if(window.initDashboard) window.initDashboard(user);
   } else {
     window.currentUser = null;
+    
+    // Hide app, show auth
     if (appShell) {
-        appShell.classList.remove('ready');
-        setTimeout(() => appShell.style.display = 'none', 500);
+      appShell.classList.remove('ready');
+      appShell.style.display = 'none';
     }
     if (authOverlay) {
-        authOverlay.style.display = 'grid';
-        setTimeout(() => authOverlay.style.opacity = '1', 50);
+      authOverlay.style.display = 'grid';
+      authOverlay.style.pointerEvents = 'auto';
+      setTimeout(() => { authOverlay.style.opacity = '1'; }, 50);
     }
   }
 });

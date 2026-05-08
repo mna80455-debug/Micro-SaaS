@@ -60,7 +60,7 @@ const initGcal = async () => { const m = await getGcal(); return m.initGcal?.();
 const connectGcal = async () => { const m = await getGcal(); return m.connectGcal?.(); };
 const addEventToGcal = async (d) => { const m = await getGcal(); return m.addEventToGcal?.(d); };
 
-document.addEventListener('DOMContentLoaded', () => {
+function domInit() {
   // Initialize elements
   btnSaveAppointment = document.getElementById('btnSaveAppointment');
   btnSaveClient = document.getElementById('btnSaveClient');
@@ -75,7 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
   import('./notifications.js').then(({ requestNotificationPermission }) => {
     requestNotificationPermission();
   }).catch(e => console.warn('Notification error:', e));
-});
+}
+
+// ES modules are deferred — DOMContentLoaded may have already fired
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', domInit);
+} else {
+  domInit();
+}
 
 // Removed: legacy direct theme toggle binding (handled by i18n/theme-manager)
 
