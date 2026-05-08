@@ -392,7 +392,7 @@ export function showPaymentModal(appointment, onSuccess, onError) {
         await processVodafoneCashPayment(appointment.clientPhone, appointment.price, appointment.id);
       } else if (method === 'paymob') {
         await processPaymobPayment(appointment.price, appointment.service, {
-          first_name: appointment.clientName?.split(' '[0] || '',
+          first_name: appointment.clientName?.split(' ')[0] || '',
           last_name: appointment.clientName?.split(' ').slice(1).join(' ') || '',
           phone_number: appointment.clientPhone
         });

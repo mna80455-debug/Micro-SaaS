@@ -12,28 +12,22 @@ import {
 import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { showToast } from './components/toast.js';
 
-let isLoginMode = true;
-
 // DOM Elements
-const authScreen = document.getElementById('authScreen');
-const appContainer = document.getElementById('appContainer');
-const btnGoogleLogin = document.getElementById('btnGoogleLogin');
-const authSubmitBtn = document.getElementById('authSubmitBtn');
-const toggleAuthBtn = document.getElementById('toggleAuthBtn');
-const authEmail = document.getElementById('authEmail');
-const authPassword = document.getElementById('authPassword');
-const authTitle = document.querySelector('.auth-title');
-const btnLogOut = document.getElementById('btnLogOut');
-
-// Make sure currentUser is available globally
-window.currentUser = null;
+const authOverlay = document.getElementById('authOverlay');
+const appShell = document.getElementById('app');
 
 // Auth State Observer
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     window.currentUser = user;
-    authScreen.classList.add('hidden');
-    appContainer.classList.remove('hidden');
+    if (authOverlay) authOverlay.style.opacity = '0';
+    setTimeout(() => {
+        if (authOverlay) authOverlay.style.display = 'none';
+        if (appShell) {
+            appShell.style.display = 'flex';
+            setTimeout(() => appShell.classList.add('ready'), 50);
+        }
+    }, 500);
     
     // Create baseline profile if not exists
     await ensureUserProfile(user);
@@ -42,8 +36,14 @@ onAuthStateChanged(auth, async (user) => {
     if(window.initDashboard) window.initDashboard(user);
   } else {
     window.currentUser = null;
-    appContainer.classList.add('hidden');
-    authScreen.classList.remove('hidden');
+    if (appShell) {
+        appShell.classList.remove('ready');
+        setTimeout(() => appShell.style.display = 'none', 500);
+    }
+    if (authOverlay) {
+        authOverlay.style.display = 'grid';
+        setTimeout(() => authOverlay.style.opacity = '1', 50);
+    }
   }
 });
 
@@ -57,12 +57,19 @@ async function ensureUserProfile(user) {
         profile: {
           name: user.displayName || "مستخدم جديد",
           email: user.email,
-          createdAt: new Date(),
-          plan: 'free'
+          createdAt: new Date().getTime(),
+          plan: 'free',
+          businessName: ''
         },
         settings: {
           bookingLink: user.uid.substring(0, 8),
-          slotDuration: 30
+          slotDuration: 30,
+          workHours: {
+            start: '09:00',
+            end: '18:00',
+            slotDuration: 30,
+            workDays: [1,2,3,4,5]
+          }
         }
       });
     }
@@ -71,8 +78,79 @@ async function ensureUserProfile(user) {
   }
 }
 
-// Google Login
-btnGoogleLogin?.addEventListener('click', async () => {
+// Global Auth Handlers
+window.handleAuth = async () => {
+  const email = document.getElementById('aEmail').value.trim();
+  const password = document.getElementById('aPass').value;
+  
+  if (!email || !password) {
+    showToast('يرجى تعبئة الحقول المطلوبة', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('btnMainAuth');
+  if(btn) btn.disabled = true;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    showToast('تم تسجيل الدخول بنجاح', 'success');
+  } catch (error) {
+    const messages = {
+      'auth/wrong-password': 'كلمة المرور غير صحيحة ❌',
+      'auth/user-not-found': 'الإيميل غير مسجل ❌',
+      'auth/invalid-email': 'إيميل غير صحيح ❌',
+      'auth/user-disabled': 'الحساب معطل ❌'
+    };
+    showToast(messages[error.code] || `خطأ: ${error.code}`, 'error');
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+};
+
+window.handleRegister = async () => {
+  const name = document.getElementById('rName').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const password = document.getElementById('rPass').value;
+  
+  if (!name || !email || !password) {
+    showToast('يرجى تعبئة كافة الحقول', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('btnRegister');
+  if(btn) btn.disabled = true;
+
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    // Profile will be created by ensureUserProfile with name
+    await setDoc(doc(db, 'users', result.user.uid), {
+        profile: {
+          name: name,
+          email: email,
+          createdAt: new Date().getTime(),
+          plan: 'free',
+          businessName: ''
+        },
+        settings: {
+          bookingLink: result.user.uid.substring(0, 8),
+          slotDuration: 30
+        }
+    });
+    showToast('تم إنشاء الحساب بنجاح', 'success');
+  } catch (error) {
+    const messages = {
+      'auth/email-already-in-use': 'الإيميل مستخدم مسبقاً ❌',
+      'auth/invalid-email': 'إيميل غير صحيح ❌',
+      'auth/weak-password': 'كلمة المرور ضعيفة جداً ❌'
+    };
+    showToast(messages[error.code] || `خطأ: ${error.code}`, 'error');
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+};
+
+window.handleGoogleAuth = async (e) => {
+  if(e) e.preventDefault();
   try {
     const result = await signInWithPopup(auth, googleProvider);
     showToast('مرحباً ' + (result.user.displayName || '') + ' 👋', 'success');
@@ -80,99 +158,14 @@ btnGoogleLogin?.addEventListener('click', async () => {
     console.error(error);
     showToast('فشل تسجيل الدخول ❌', 'error');
   }
-});
+};
 
-// Email/Password Submit
-authSubmitBtn?.addEventListener('click', async () => {
-  const email = authEmail.value.trim();
-  const password = authPassword.value;
-  
-  if (!email || !password) {
-    showToast('يرجى تعبئة الحقول المطلوبة', 'error');
-    return;
-  }
-  
-  authSubmitBtn.disabled = true;
-  try {
-    if (isLoginMode) {
-      await signInWithEmailAndPassword(auth, email, password);
-      showToast('تم تسجيل الدخول بنجاح', 'success');
-    } else {
-      await createUserWithEmailAndPassword(auth, email, password);
-      showToast('تم إنشاء الحساب بنجاح', 'success');
-    }
-  } catch (error) {
-    const messages = {
-      'auth/wrong-password': 'كلمة المرور غير صحيحة ❌',
-      'auth/user-not-found': 'الإيميل غير مسجل ❌',
-      'auth/invalid-email': 'إيميل غير صحيح ❌',
-      'auth/email-already-in-use': 'الإيميل مستخدم مسبقاً ❌',
-      'auth/weak-password': 'كلمة المرور ضعيفة جداً ❌'
-    };
-    const errorMessage = messages[error.code] || `خطأ: ${error.code}`;
-    showToast(errorMessage, 'error');
-  } finally {
-    authSubmitBtn.disabled = false;
-  }
-});
-
-// Toggle Login / Signup Mode
-toggleAuthBtn?.addEventListener('click', () => {
-  isLoginMode = !isLoginMode;
-  if (isLoginMode) {
-    authTitle.textContent = "أهلاً بيك";
-    authSubmitBtn.textContent = "تسجيل الدخول";
-    toggleAuthBtn.textContent = "سجل دلوقتي";
-  } else {
-    authTitle.textContent = "حساب جديد";
-    authSubmitBtn.textContent = "إنشاء حساب";
-    toggleAuthBtn.textContent = "تسجيل الدخول";
-  }
-});
-
-// Logout
-btnLogOut?.addEventListener('click', async () => {
+window.handleLogout = async () => {
   try {
     await signOut(auth);
     showToast('تم تسجيل الخروج', 'success');
+    window.location.reload(); // Hard reload to clear state
   } catch (e) {
-    showToast('حدث خطأ', 'error');
-  }
-});
-
-// Forgot Password
-document.getElementById('btnForgotPassword')?.addEventListener('click', async () => {
-  const email = authEmail.value.trim();
-  if(!email) {
-    showToast('يرجى إدخال الإيميل أولاً', 'error');
-    authEmail.focus();
-    return;
-  }
-  try {
-    await sendPasswordResetEmail(auth, email);
-    showToast('تم إرسال رابط استعادة كلمة المرور 📧', 'success');
-  } catch(e) {
-    const messages = {
-      'auth/invalid-email': 'إيميل غير صحيح',
-      'auth/user-not-found': 'الإيميل غير مسجل'
-    };
-    showToast(messages[e.code] || 'حدث خطأ', 'error');
-  }
-});
-
-// Email Verification Check & Send
-window.checkAndSendVerification = async function() {
-  const user = window.currentUser;
-  if(!user) return;
-
-  try {
-    if(user.emailVerified) {
-      showToast('الإيميل مُفعّل مسبقاً ✓', 'success');
-      return;
-    }
-    await sendEmailVerification(user);
-    showToast('تم إرسال رابط التفعيل 📧', 'success');
-  } catch(e) {
     showToast('حدث خطأ', 'error');
   }
 };

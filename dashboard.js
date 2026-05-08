@@ -30,17 +30,23 @@ function escapeHTML(str) {
 
 window.dbg('Starting...');
 
-// Global fallback functions (available immediately even before modules load)
+// Select common buttons/elements
+let btnSaveAppointment, btnSaveClient, btnSaveService, btnCopyLink, btnSaveNotifications;
 
-function initAuth() {
-  onAuthStateChanged(auth, (user) => {
-    window.dbg('Auth state:', user ? 'logged in' : 'not logged in');
-    if (user) {
-      window.currentUser = user;
-      initDashboard(user);
-    }
-  });
-}
+// Global exposure
+window.initDashboard = initDashboard;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.saveAppointment = saveAppointment;
+window.saveNewService = saveNewService;
+window.saveNewClient = saveNewClient;
+window.updateService = updateService;
+window.deleteService = deleteService;
+window.updateClient = updateClient;
+window.deleteClient = deleteClient;
+window.updateAppointment = updateAppointment;
+
+// Global fallback functions (available immediately even before modules load)
 
 // gcal loaded lazily to avoid breaking the module if gapi/google aren't ready
 let _gcal = null;
@@ -55,8 +61,14 @@ const connectGcal = async () => { const m = await getGcal(); return m.connectGca
 const addEventToGcal = async (d) => { const m = await getGcal(); return m.addEventToGcal?.(d); };
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize elements
+  btnSaveAppointment = document.getElementById('btnSaveAppointment');
+  btnSaveClient = document.getElementById('btnSaveClient');
+  btnSaveService = document.getElementById('btnSaveService');
+  btnCopyLink = document.getElementById('btnCopyLink');
+  btnSaveNotifications = document.getElementById('btnSaveNotifications');
+
   window.dbg('DOM loaded');
-  initAuth();
   initI18n();
   setupRouting();
   
@@ -356,7 +368,8 @@ async function loadAIRecommendations() {
     const pending = recentApts.filter(a => a.status === 'pending').length;
     const noShow = recentApts.filter(a => a.status === 'no-show').length;
     
-    const revenue = completed.reduce((sum, a) => sum + (a.price || 0), 0);
+    const completedApts = recentApts.filter(a => a.status === 'completed');
+    const revenue = completedApts.reduce((sum, a) => sum + (a.price || 0), 0);
     const clients = new Set(recentApts.map(a => a.clientPhone)).size;
     
     // Monthly comparison
@@ -493,20 +506,14 @@ async function loadClients() {
 
 function updateClientFilters(clients) {
   const tagSelect = document.getElementById('clientsTagFilter');
+  if (!tagSelect) return;
   const allTags = new Set();
   clients.forEach(c => (c.tags || []).forEach(t => allTags.add(t)));
   tagSelect.innerHTML = '<option value="">كل الوسوم</option>' + 
     Array.from(allTags).sort().map(t => `<option value="${t}">${t}</option>`).join('');
 }
 
-window.searchClients = function(query) {
-  if(!window.allClients) return;
-  const q = query.toLowerCase();
-  const filtered = window.allClients.filter(c => 
-    c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)
-  );
-  renderClients(filtered);
-};
+// searchClients is defined later with full Firestore query support
 
 window.filterClients = function() {
   if(!window.allClients) return;
@@ -612,10 +619,11 @@ window.saveNewClientForm = async function() {
 }
 
 // Saving Appointment
-btnSaveAppointment?.addEventListener('click', async () => {
+window.saveAppointment = async () => {
   if(!window.currentUser) return;
   
-  const clientName = document.getElementById('aptClientName').value.trim();
+  const btn = document.getElementById('btnSaveAppointment');
+  if(!btn) return;
   const phone = document.getElementById('aptClientPhone').value.trim();
   const service = document.getElementById('aptService').value.trim();
   const dateVal = document.getElementById('aptDate').value;
@@ -645,6 +653,7 @@ btnSaveAppointment?.addEventListener('click', async () => {
     btnSaveAppointment.disabled = true;
     btnSaveAppointment.classList.add('btn-loading');
     const dateObj = new Date(dateVal);
+    const clientName = clientInput.value.trim();
     
     const aptData = {
       userId: window.currentUser.uid,
@@ -749,10 +758,10 @@ btnSaveAppointment?.addEventListener('click', async () => {
     console.error(err);
     showToast('خطأ في الحفظ', 'error');
   } finally {
-    btnSaveAppointment.disabled = false;
-    btnSaveAppointment.classList.remove('btn-loading');
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
   }
-});
+};
 
 // Global Search Logic
 document.getElementById('globalSearch')?.addEventListener('input', async (e) => {
@@ -881,7 +890,7 @@ window.saveNewService = async function() {
   const name = document.getElementById('newServiceName');
   const duration = document.getElementById('newServiceDuration');
   const price = document.getElementById('newServicePrice');
-  const description = document.getElementById('newServiceDesc');
+  const description = document.getElementById('newServiceDesc') || { value: '' };
 
   if(!name.value.trim()) {
     name.style.borderColor = 'var(--cancelled)';
@@ -1087,6 +1096,38 @@ window.searchClients = async function(searchQuery) {
   }
 };
 
+window.saveNewClient = async function() {
+  const name = document.getElementById('newClientName').value.trim();
+  const phone = document.getElementById('newClientPhone').value.trim();
+  const email = document.getElementById('newClientEmail').value.trim();
+
+  if(!name) {
+    showToast('يرجى إدخال اسم العميل', 'error');
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, 'clients'), {
+      userId: window.currentUser.uid,
+      name,
+      phone,
+      email,
+      category: 'new',
+      totalVisits: 0,
+      createdAt: new Date().getTime()
+    });
+    showToast('تم إضافة العميل بنجاح', 'success');
+    window.closeModal('newClientModal');
+    // Reset form
+    document.getElementById('newClientName').value = '';
+    document.getElementById('newClientPhone').value = '';
+    document.getElementById('newClientEmail').value = '';
+    loadClients();
+  } catch(e) {
+    showToast('خطأ في الإضافة', 'error');
+  }
+};
+
 window.openEditClientModal = async function(clientId) {
   try {
     const docSnap = await getDoc(doc(db, 'clients', clientId));
@@ -1228,9 +1269,8 @@ async function loadStats() {
       const completedApts = allApts.filter(a => a.status === 'completed');
 
       animateValue('statTotalApts', 0, allApts.length, 600);
-      animateValue('statCompletedApts', 0, completedApts.length, 600);
+      animateValue('statCompleted', 0, completedApts.length, 600);
       animateValue('statTotalRevenue', 0, completedApts.reduce((sum, a) => sum + (a.price || 0), 0), 800);
-      animateValue('statTotalClients', 0, allApts.length ? new Set(allApts.map(a => a.clientPhone)).size : 0, 600);
 
       // Monthly Revenue Chart (last 6 months)
       const months = [];
@@ -1373,24 +1413,41 @@ async function loadWorkHours() {
     // Work Hours
     const wh = data?.settings?.workHours;
     if(wh) {
-      document.getElementById('settingStartTime').value = wh.start || '09:00';
-      document.getElementById('settingEndTime').value = wh.end || '18:00';
-      document.getElementById('settingSlotDuration').value = wh.slotDuration || 30;
-      document.querySelectorAll('#workDaysContainer input').forEach(cb => {
-        cb.checked = wh.workDays?.includes(parseInt(cb.value));
-      });
+      const startEl = document.getElementById('settingStartTime');
+      const endEl = document.getElementById('settingEndTime');
+      if(startEl) startEl.value = wh.start || '09:00';
+      if(endEl) endEl.value = wh.end || '18:00';
     }
 
     // Payments
     const pay = data?.settings?.payments;
     if(pay) {
-      document.getElementById('settingVodafoneCash').value = pay.vodafoneCash || '';
-      document.getElementById('enableVodafoneCash').checked = pay.enableVodafoneCash ?? true;
-      document.getElementById('settingStripeKey').value = pay.stripeKey || '';
-      document.getElementById('enableStripe').checked = pay.enableStripe ?? false;
+      const vodEl = document.getElementById('settingVodafone');
+      const stripeEl = document.getElementById('settingStripeKey');
+      const enableStripeEl = document.getElementById('enableStripe');
+      if(vodEl) vodEl.value = pay.vodafoneCash || '';
+      if(stripeEl) stripeEl.value = pay.stripeKey || '';
+      if(enableStripeEl) enableStripeEl.checked = pay.enableStripe ?? false;
     }
   } catch(e) { console.error(e); }
 }
+
+// Modal Management
+window.openModal = function(id) {
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+window.closeModal = function(id) {
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.classList.remove('open');
+    document.body.style.overflow = 'auto';
+  }
+};
 
 document.getElementById('btnSavePayments')?.addEventListener('click', async () => {
   const stripeKey = document.getElementById('settingStripeKey')?.value || '';
@@ -1456,29 +1513,30 @@ window.initDashboard = async function(user) {
       // Load social settings
       if(userData.settings?.social) {
         const s = userData.settings.social;
-        if(s.whatsapp) document.getElementById('settingWhatsApp').value = s.whatsapp;
-        if(s.instagram) document.getElementById('settingInstagram').value = s.instagram;
-        if(s.facebook) document.getElementById('settingFacebook').value = s.facebook;
-        if(s.tiktok) document.getElementById('settingTikTok').value = s.tiktok;
-        if(s.website) document.getElementById('settingWebsite').value = s.website;
-        if(s.waMessage) document.getElementById('settingWaMessage').value = s.waMessage;
+        const waEl = document.getElementById('settingWhatsApp');
+        const igEl = document.getElementById('settingInstagram');
+        if(waEl && s.whatsapp) waEl.value = s.whatsapp;
+        if(igEl && s.instagram) igEl.value = s.instagram;
       }
       // Load notification settings
       if(userData.settings?.notifications) {
         const n = userData.settings.notifications;
-        if(n.waReminder) document.getElementById('settingWAReminder').value = n.waReminder;
-        if(n.browserNotify) document.getElementById('settingBrowserNotify').value = n.browserNotify;
-        if(n.emailConfirm !== undefined) document.getElementById('settingEmailConfirm').checked = n.emailConfirm;
+        const waRemEl = document.getElementById('settingWAReminder');
+        const brNotEl = document.getElementById('settingBrowserNotify');
+        if(waRemEl && n.waReminder) waRemEl.value = n.waReminder;
+        if(brNotEl && n.browserNotify) brNotEl.value = n.browserNotify;
         window.currentUserSettings = window.currentUserSettings || {};
         window.currentUserSettings.notifications = n;
       }
       // Load payment settings
       if(userData.settings?.payment) {
         const p = userData.settings.payment;
-        if(p.vodafoneCash) document.getElementById('settingVodafoneCash').value = p.vodafoneCash;
-        if(p.enableVodafoneCash !== undefined) document.getElementById('enableVodafoneCash').checked = p.enableVodafoneCash;
-        if(p.stripeKey) document.getElementById('settingStripeKey').value = p.stripeKey;
-        if(p.enableStripe !== undefined) document.getElementById('enableStripe').checked = p.enableStripe;
+        const vodEl = document.getElementById('settingVodafone');
+        const stripeEl = document.getElementById('settingStripeKey');
+        const enableStripeEl = document.getElementById('enableStripe');
+        if(vodEl && p.vodafoneCash) vodEl.value = p.vodafoneCash;
+        if(stripeEl && p.stripeKey) stripeEl.value = p.stripeKey;
+        if(enableStripeEl && p.enableStripe !== undefined) enableStripeEl.checked = p.enableStripe;
       }
     }
 
@@ -1495,8 +1553,10 @@ window.initDashboard = async function(user) {
     try {
       await initGcal();
       if(localStorage.getItem('gcal_token')) {
-        document.getElementById('gcalStatusText').textContent = '✅ متصل بتقويم جوجل';
-        document.getElementById('btnConnectGcal').textContent = 'إعادة الربط';
+        const gcalStatus = document.getElementById('gcalStatusText');
+        const btnGcal = document.getElementById('btnConnectGcal');
+        if(gcalStatus) gcalStatus.textContent = '✅ متصل بتقويم جوجل';
+        if(btnGcal) btnGcal.textContent = 'إعادة الربط';
       }
     } catch(e) { console.warn("GCal init failed", e); }
 
@@ -1511,12 +1571,108 @@ window.initDashboard = initDashboard;
 window.handleConnectGcal = async function() {
   try {
     await connectGcal();
-    document.getElementById('gcalStatusText').textContent = '✅ متصل بتقويم جوجل';
-    document.getElementById('btnConnectGcal').textContent = 'إعادة الربط';
+    const gcalStatus = document.getElementById('gcalStatusText');
+    const btnGcal = document.getElementById('btnConnectGcal');
+    if(gcalStatus) gcalStatus.textContent = '✅ متصل بتقويم جوجل';
+    if(btnGcal) btnGcal.textContent = 'إعادة الربط';
     showToast('تم ربط تقويم جوجل بنجاح', 'success');
   } catch(e) {
     showToast('خطأ في الربط', 'error');
   }
+};
+
+// ==================== GLOBAL ONCLICK HANDLERS ====================
+
+// These are called from HTML onclick attributes in app.html settings section
+window.saveProfileSettings = async function() {
+  if(!window.currentUser) return;
+  const name = document.getElementById('settingName')?.value?.trim() || '';
+  const business = document.getElementById('settingBusiness')?.value?.trim() || '';
+  
+  try {
+    await updateDoc(doc(db, 'users', window.currentUser.uid), {
+      'profile.name': name,
+      'profile.businessName': business
+    });
+    document.getElementById('sidebarName').textContent = name || 'مستخدم';
+    document.getElementById('sidebarAvatar').textContent = (name || 'م')[0].toUpperCase();
+    showToast('تم حفظ الملف الشخصي بنجاح ✅', 'success');
+  } catch(e) {
+    showToast('خطأ في الحفظ', 'error');
+  }
+};
+
+window.saveSocialSettings = async function() {
+  if(!window.currentUser) return;
+  try {
+    await updateDoc(doc(db, 'users', window.currentUser.uid), {
+      'settings.social': {
+        whatsapp: document.getElementById('settingWhatsApp')?.value?.trim() || '',
+        instagram: document.getElementById('settingInstagram')?.value?.trim() || ''
+      }
+    });
+    showToast('تم تحديث الروابط ✅', 'success');
+  } catch(e) {
+    showToast('خطأ في الحفظ', 'error');
+  }
+};
+
+window.saveWorkHours = async function() {
+  if(!window.currentUser) return;
+  try {
+    await updateDoc(doc(db, 'users', window.currentUser.uid), {
+      'settings.workHours': {
+        start: document.getElementById('settingStartTime')?.value || '09:00',
+        end: document.getElementById('settingEndTime')?.value || '18:00'
+      }
+    });
+    showToast('تم حفظ مواعيد العمل ✅', 'success');
+  } catch(e) {
+    showToast('خطأ في الحفظ', 'error');
+  }
+};
+
+window.savePaymentSettings = async function() {
+  if(!window.currentUser) return;
+  try {
+    await updateDoc(doc(db, 'users', window.currentUser.uid), {
+      'settings.payments': {
+        stripeKey: document.getElementById('settingStripeKey')?.value || '',
+        enableStripe: document.getElementById('enableStripe')?.checked || false,
+        vodafoneCash: document.getElementById('settingVodafone')?.value || '',
+        enableVodafoneCash: document.getElementById('enableVodafoneCash')?.checked || false,
+        paymobKey: document.getElementById('settingPaymob')?.value || '',
+        enablePaymob: document.getElementById('enablePaymob')?.checked || false
+      }
+    });
+    showToast('تم حفظ بوابات الدفع ✅', 'success');
+  } catch(e) {
+    showToast('خطأ في الحفظ', 'error');
+  }
+};
+
+window.saveNotificationSettings = async function() {
+  if(!window.currentUser) return;
+  try {
+    await updateDoc(doc(db, 'users', window.currentUser.uid), {
+      'settings.notifications': {
+        waReminder: parseInt(document.getElementById('settingWAReminder')?.value) || 0,
+        browserNotify: parseInt(document.getElementById('settingBrowserNotify')?.value) || 0,
+        smsNumber: document.getElementById('settingSMS')?.value || ''
+      }
+    });
+    showToast('تم حفظ إعدادات التنبيهات ✅', 'success');
+  } catch(e) {
+    showToast('خطأ في الحفظ', 'error');
+  }
+};
+
+window.openNewClientModal = function() {
+  window.openModal('newClientModal');
+};
+
+window.openNewServiceModal = function() {
+  window.openModal('newServiceModal');
 };
 
 // ==================== SOCIAL MEDIA & WHATSAPP ====================
@@ -1560,15 +1716,12 @@ document.getElementById('btnSaveSocial')?.addEventListener('click', async () => 
   btn.classList.add('btn-loading');
 
   try {
+    const socialData = {
+      whatsapp: document.getElementById('settingWhatsApp')?.value?.trim() || '',
+      instagram: document.getElementById('settingInstagram')?.value?.trim() || ''
+    };
     await updateDoc(doc(db, 'users', window.currentUser.uid), {
-      'settings.social': {
-        whatsapp: document.getElementById('settingWhatsApp').value.trim(),
-        instagram: document.getElementById('settingInstagram').value.trim(),
-        facebook: document.getElementById('settingFacebook').value.trim(),
-        tiktok: document.getElementById('settingTikTok').value.trim(),
-        website: document.getElementById('settingWebsite').value.trim(),
-        waMessage: document.getElementById('settingWaMessage').value.trim()
-      }
+      'settings.social': socialData
     });
     showToast('تم حفظ بيانات التواصل ✅', 'success');
   } catch(e) {
@@ -1819,28 +1972,4 @@ window.saveSmsSettings = async function() {
   }
 };
 
-// ==================== SAVE SMS SETTINGS ====================
 
-window.saveSmsSettings = async function() {
-  const twilioSid = document.getElementById('settingTwilioSid')?.value || '';
-  const twilioToken = document.getElementById('settingTwilioToken')?.value || '';
-  const smsPhone = document.getElementById('settingSmsPhone')?.value || '';
-  
-  try {
-    await updateDoc(doc(db, 'users', window.currentUser.uid), {
-      'settings.notifications.twilioSid': twilioSid,
-      'settings.notifications.twilioToken': twilioToken,
-      'settings.notifications.smsNumber': smsPhone
-    });
-    
-    // Update current settings
-    if(!window.currentUserSettings) window.currentUserSettings = {};
-    if(!window.currentUserSettings.notifications) window.currentUserSettings.notifications = {};
-    window.currentUserSettings.notifications.smsNumber = smsPhone;
-    
-    showToast('?? ??? ??????? SMS ?????! ?', 'success');
-  } catch(e) {
-    console.error('SMS Settings error:', e);
-    showToast('??? ?? ?????', 'error');
-  }
-};

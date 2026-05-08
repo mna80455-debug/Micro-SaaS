@@ -2,19 +2,22 @@
 
 // ===== TOGGLE PANEL =====
 window.toggleFlowAI = function () {
-  const panel = document.getElementById('aiPanel');
-  const fab = document.getElementById('aiFab');
-  if(panel) panel.classList.toggle('open');
+  const panel = document.getElementById('flowAiPanel');
+  const fab = document.getElementById('flowAiFab');
+  if(panel) {
+    const isOpen = panel.style.display === 'flex';
+    panel.style.display = isOpen ? 'none' : 'flex';
+  }
   if(fab) fab.classList.toggle('hidden');
 };
 
 // ===== SEND MESSAGE =====
 window.sendToFlowAI = async function () {
-  const input = document.getElementById('aiInput');
+  const input = document.getElementById('flowAiInput');
   const text = input?.value.trim();
   if (!text) return;
   
-  const messagesContainer = document.getElementById('aiMessages');
+  const messagesContainer = document.getElementById('flowAiMessages');
   
   // Add user message
   const userBubble = document.createElement('div');
@@ -213,11 +216,12 @@ window.loadAIRecommendations = async function() {
     container.style.display = 'block';
 
     const recentApts = allApts.filter(a => a.date >= weekAgo);
-    const completed = recentApts.filter(a => a.status === 'completed').length;
+    const completedApts = recentApts.filter(a => a.status === 'completed');
+    const completed = completedApts.length;
     const pending = recentApts.filter(a => a.status === 'pending' || a.status === 'awaiting_payment').length;
     const cancelled = recentApts.filter(a => a.status === 'cancelled' || a.status === 'no-show').length;
 
-    const revenue = completed.reduce((sum, a) => sum + (a.price || 0), 0);
+    const revenue = completedApts.reduce((sum, a) => sum + (a.price || 0), 0);
     const clients = new Set(recentApts.map(a => a.clientPhone)).size;
 
     let html = `

@@ -15,334 +15,11 @@
   
   <!-- Styles -->
   <link rel="stylesheet" href="style.css">
-  
-  <style>
-    :root, .dark-theme {
-      --primary: #6366f1;
-      --primary-light: #818cf8;
-      --primary-dark: #4f46e5;
-      --secondary: #a855f7;
-      --accent: #2dd4bf;
-      --bg-void: #05070A;
-      --bg-surface: #0C0F17;
-      --bg-card: #121620;
-      --bg-glass: rgba(18, 22, 32, 0.7);
-      --text-primary: #F8FAFC;
-      --text-secondary: #94A3B8;
-      --text-muted: #475569;
-      --border: rgba(255, 255, 255, 0.08);
-      --border-right: rgba(255, 255, 255, 0.15);
-      --success: #10B981;
-      --warning: #F59E0B;
-      --error: #EF4444;
-      --radius-sm: 12px;
-      --radius-md: 20px;
-      --radius-lg: 28px;
-      --transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-    }
-
-    .light-theme {
-      --bg-void: #F8FAFC;
-      --bg-surface: #FFFFFF;
-      --bg-card: #F1F5F9;
-      --text-primary: #0F172A;
-      --text-secondary: #475569;
-      --text-muted: #94A3B8;
-      --border: rgba(0, 0, 0, 0.08);
-    }
-
-    * { margin:0; padding:0; box-sizing: border-box; }
-    
-    body {
-      font-family: 'Plus Jakarta Sans', 'Cairo', sans-serif;
-      background: var(--bg-void);
-      color: var(--text-primary);
-      overflow-x: hidden;
-      height: 100vh;
-    }
-
-    /* Auth Screen */
-    #authOverlay {
-      position: fixed; inset: 0;
-      background: rgba(5, 7, 10, 0.97);
-      backdrop-filter: blur(40px);
-      -webkit-backdrop-filter: blur(40px);
-      display: grid; place-items: center;
-      z-index: 9999;
-      transition: opacity 0.5s ease, visibility 0.5s ease;
-    }
-
-    .auth-box {
-      width: 100%; max-width: 480px;
-      padding: 48px 40px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: 0 50px 100px rgba(0,0,0,0.8);
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .auth-box::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
-    }
-
-    .auth-logo {
-      width: 80px; height: 80px;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      border-radius: 24px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2.5rem; color: white; font-weight: 800;
-      margin: 0 auto 32px;
-      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
-    }
-
-    .auth-title {
-      font-size: 2.2rem; font-weight: 800;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .auth-sub {
-      color: var(--text-secondary);
-      margin-bottom: 32px; font-size: 1rem;
-    }
-
-    .auth-tabs {
-      display: flex; gap: 32px;
-      justify-content: center;
-      margin-bottom: 32px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 16px;
-    }
-
-    .auth-tab {
-      cursor: pointer;
-      font-weight: 600;
-      color: var(--text-muted);
-      padding-bottom: 8px;
-      border-bottom: 2px solid transparent;
-      transition: var(--transition);
-    }
-
-    .auth-tab.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
-
-    .field-group { margin-bottom: 20px; text-align: right; }
-    .field-group label {
-      display: block; margin-bottom: 8px;
-      color: var(--text-secondary); font-size: 0.9rem; font-weight: 600;
-    }
-    .field-input {
-      width: 100%; background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border); padding: 16px 20px;
-      border-radius: var(--radius-sm); color: var(--text-primary);
-      outline: none; transition: var(--transition); font-size: 1rem;
-      font-family: inherit;
-    }
-    .field-input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .btn-primary {
-      width: 100%; background: linear-gradient(135deg, var(--primary), var(--secondary));
-      color: white; padding: 16px; border-radius: var(--radius-sm);
-      font-weight: 700; font-size: 1.05rem; border: none;
-      cursor: pointer; transition: var(--transition);
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-    }
-    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4); }
-
-    .btn-ghost {
-      width: 100%; background: rgba(255, 255, 255, 0.05);
-      color: var(--text-primary); border: 1px solid var(--border);
-      padding: 16px; border-radius: var(--radius-sm);
-      font-weight: 600; font-size: 1.05rem;
-      cursor: pointer; transition: var(--transition);
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-    }
-    .btn-ghost:hover { border-color: var(--primary); background: rgba(255, 255, 255, 0.1); }
-
-    .divider {
-      display: flex; align-items: center; gap: 16px; margin: 24px 0;
-    }
-    .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-    .divider span { color: var(--text-muted); font-size: 0.85rem; }
-
-    .auth-switch { margin-top: 24px; color: var(--text-secondary); font-size: 0.95rem; }
-    .auth-switch button {
-      background: transparent; border: none; color: var(--primary);
-      font-weight: 600; cursor: pointer; font-family: inherit;
-    }
-
-    /* App Shell */
-    .app-shell {
-      display: none;
-      height: 100vh;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-    .app-shell.ready {
-      display: flex;
-      opacity: 1;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      width: 280px; background: var(--bg-card);
-      border-left: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      padding: 40px 20px; transition: var(--transition);
-    }
-    .sidebar.collapsed { width: 90px; padding: 40px 10px; }
-    .sidebar.collapsed .brand span,
-    .sidebar.collapsed .nav-label,
-    .sidebar.collapsed .sidebar-footer { display: none; }
-
-    .brand {
-      font-size: 1.8rem; font-weight: 800; color: var(--primary);
-      display: flex; align-items: center; gap: 14px;
-      margin-bottom: 60px; padding-right: 10px;
-    }
-    .brand i { font-size: 2rem; }
-
-    .nav-menu {
-      flex: 1; display: flex; flex-direction: column; gap: 8px;
-    }
-    .nav-item {
-      display: flex; align-items: center; gap: 16px;
-      padding: 16px 24px; color: var(--text-secondary);
-      text-decoration: none; border-radius: 16px;
-      transition: var(--transition); font-weight: 500;
-      cursor: pointer; border: 1px solid transparent;
-    }
-    .nav-item:hover {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-primary); transform: translateX(-5px);
-    }
-    .nav-item.active {
-      background: rgba(99, 102, 241, 0.1);
-      color: var(--primary); border-color: rgba(99, 102, 241, 0.2);
-      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.1);
-    }
-    .nav-item i { font-size: 1.5rem; }
-
-    .sidebar-footer {
-      margin-top: auto; padding-top: 24px;
-      border-top: 1px solid var(--border);
-    }
-    .sidebar-footer .nav-item { color: var(--error); }
-    .sidebar-footer .nav-item:hover {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.2);
-    }
-
-    /* Main Content */
-    .main-content {
-      flex: 1; overflow-y: auto; padding: 40px;
-      background: var(--bg-void);
-    }
-
-    .page-header { margin-bottom: 32px; }
-    .page-header h1 {
-      font-size: 2.8rem; font-weight: 800;
-      margin-bottom: 8px; letter-spacing: -1px;
-    }
-    .gradient-text {
-      background: linear-gradient(135deg, var(--primary-light), var(--secondary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .page-header p { color: var(--text-secondary); font-size: 1.1rem; }
-
-    .view { display: none; }
-    .view.active { display: block; animation: fadeIn 0.4s ease; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Stats */
-    .stats-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 24px; margin-bottom: 40px;
-    }
-    .stat-card {
-      background: var(--bg-card); padding: 32px;
-      border-radius: var(--radius-md); border: 1px solid var(--border);
-      transition: var(--transition);
-    }
-    .stat-card:hover { border-color: var(--primary); transform: translateY(-5px); }
-    .stat-label {
-      color: var(--text-secondary); font-weight: 600;
-      font-size: 0.85rem; text-transform: uppercase;
-      letter-spacing: 1px; margin-bottom: 8px;
-    }
-    .stat-value {
-      font-size: 2.5rem; font-weight: 800;
-      background: linear-gradient(135deg, var(--primary-light), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    /* Responsive */
-    @media (max-width: 1024px) {
-      .sidebar { width: 90px; padding: 40px 10px; }
-      .sidebar .brand span, .sidebar .nav-label, .sidebar .sidebar-footer { display: none; }
-      .sidebar .nav-item { justify-content: center; padding: 16px; }
-      .main-content { padding: 24px; }
-      .page-header h1 { font-size: 2rem; }
-    }
-
-    @media (max-width: 768px) {
-      .app-shell { flex-direction: column; }
-      .sidebar {
-        width: 100%; height: auto; flex-direction: row;
-        padding: 16px; position: fixed; bottom: 0; left: 0; right: 0;
-        z-index: 2000; border-left: none; border-top: 1px solid var(--border);
-      }
-      .sidebar .brand { display: none; }
-      .nav-menu { flex-direction: row; width: 100%; justify-content: space-around; }
-      .sidebar-footer { display: none; }
-      .main-content { padding: 24px 16px 120px; }
-    }
-
-    /* Toast */
-    #toastContainer {
-      position: fixed; top: 32px; left: 32px;
-      z-index: 10000; display: flex; flex-direction: column; gap: 12px;
-    }
-    .toast {
-      background: var(--bg-card); border: 1px solid var(--border);
-      color: var(--text-primary); padding: 16px 24px;
-      border-radius: 16px; backdrop-filter: blur(20px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-      display: flex; align-items: center; gap: 12px;
-      animation: toastIn 0.5s ease; transition: 0.3s;
-    }
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateX(-40px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    .toast.hide { opacity: 0; transform: translateX(-40px); }
-    .toast i { font-size: 1.4rem; color: var(--primary); }
-  </style>
+  <link rel="stylesheet" href="app.css">
 </head>
 <body>
   <!-- Auth Overlay -->
-  <div id="authOverlay">
+  <div id="authOverlay" style="position: fixed; inset: 0; background: rgba(5,7,10,0.97); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display: grid; place-items: center; z-index: 5000; transition: opacity 0.5s ease;">
     <div class="auth-box">
       <div class="auth-logo"><i class="ph-fill ph-lightning"></i></div>
       <h2 class="auth-title">BookFlow <span style="color: var(--accent);">Elite</span></h2>
@@ -405,7 +82,7 @@
   </div>
 
   <!-- App Shell -->
-  <div class="app-shell" id="app">
+  <div class="app-shell" id="app" style="display: none;">
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="brand">
@@ -417,6 +94,7 @@
         <div class="nav-item active" data-page="dashboard">
           <i class="ph-duotone ph-house-line"></i>
           <span class="nav-label">الرئيسية</span>
+          <span id="todayCountBadge" class="nav-badge">0</span>
         </div>
         <div class="nav-item" data-page="calendar">
           <i class="ph-duotone ph-calendar-plus"></i>
@@ -441,6 +119,13 @@
       </nav>
 
       <div class="sidebar-footer">
+        <div style="padding: 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white;" id="sidebarAvatar">م</div>
+          <div style="overflow: hidden;">
+            <div style="font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="sidebarName">مستخدم</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);" id="sidebarPlan">Free Plan</div>
+          </div>
+        </div>
         <div class="nav-item" onclick="handleLogout()">
           <i class="ph-bold ph-sign-out"></i>
           <span class="nav-label">خروج</span>
@@ -453,7 +138,7 @@
       <!-- Dashboard View -->
       <div class="view active" id="dashboardView">
         <div class="page-header">
-          <h1>مرحباً <span class="gradient-text" id="greetingName">...</span></h1>
+          <h1 id="greetingText">مرحباً <span class="gradient-text" id="greetingName">...</span></h1>
           <p id="greetingDate"></p>
         </div>
 
@@ -572,8 +257,23 @@
             <div class="stat-value" id="statTotalRevenue">0 <small style="font-size: 1rem;">ج.م</small></div>
           </div>
         </div>
-        <div class="stat-card">
-          <canvas id="revenueChart" style="width: 100%; height: 400px;"></canvas>
+        <div class="stats-grid" style="margin-top: 40px; grid-template-columns: 2fr 1fr; gap: 24px;">
+          <div class="stat-card">
+            <h3 style="margin-bottom: 24px;">إحصائيات الإيرادات</h3>
+            <canvas id="revenueChart" style="width: 100%; height: 300px;"></canvas>
+          </div>
+          <div class="stat-card">
+            <h3 style="margin-bottom: 24px;">توزيع المواعيد</h3>
+            <canvas id="statusChart" style="width: 100%; height: 200px;"></canvas>
+            <div id="statusLegend" style="margin-top: 24px; display: flex; flex-direction: column; gap: 8px;"></div>
+          </div>
+        </div>
+
+        <div class="stat-card" style="margin-top: 24px;">
+          <h3 style="margin-bottom: 24px;">أفضل 5 عملاء</h3>
+          <div id="topClientsList" style="display: flex; flex-direction: column; gap: 16px;">
+            <p style="color: var(--text-muted);">جاري التحميل...</p>
+          </div>
         </div>
       </div>
 
@@ -591,12 +291,16 @@
               <i class="ph-fill ph-identification-card"></i> الملف التعريفي
             </h3>
             <div class="field-group">
+              <label>الاسم الشخصي</label>
+              <input type="text" class="field-input" id="settingName" placeholder="الاسم">
+            </div>
+            <div class="field-group">
               <label>اسم النشاط التجاري</label>
-              <input type="text" class="field-input" id="settingBusinessName" placeholder="اسم النشاط">
+              <input type="text" class="field-input" id="settingBusiness" placeholder="اسم النشاط">
             </div>
             <div class="field-group">
               <label>رابط الحجز المخصص</label>
-              <input type="text" class="field-input" id="settingBookingLink" readonly>
+              <input type="text" class="field-input" id="bookingUsername" readonly>
             </div>
             <button class="btn-primary" onclick="saveProfileSettings()">
               <i class="ph-bold ph-check"></i> حفظ البيانات
@@ -702,38 +406,6 @@
               <i class="ph-bold ph-check"></i> حفظ إعدادات SMS
             </button>
           </div>
-            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
-              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                <input type="checkbox" id="enableStripe" style="width: 18px; height: 18px;">
-                <span>تفعيل Stripe</span>
-              </label>
-            </div>
-            <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
-            <div class="form-group">
-              <label>Vodafone Cash Number</label>
-              <input type="tel" class="form-input" id="settingVodafone" placeholder="010...">
-            </div>
-            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
-              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                <input type="checkbox" id="enableVodafone" style="width: 18px; height: 18px;">
-                <span>تفعيل فودافون كاش</span>
-              </label>
-            </div>
-            <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
-            <div class="form-group">
-              <label>Paymob API Key</label>
-              <input type="text" class="form-input" id="settingPaymob" placeholder="API Key...">
-            </div>
-            <div style="display: flex; gap: 12px;">
-              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                <input type="checkbox" id="enablePaymob" style="width: 18px; height: 18px;">
-                <span>تفعيل Paymob</span>
-              </label>
-            </div>
-            <button class="btn-primary" style="margin-top: 24px; width: 100%;" onclick="savePaymentSettings()">
-              <i class="ph-bold ph-check"></i> حفظ بوابات الدفع
-            </button>
-          </div>
 
           <!-- Notifications -->
           <div class="stat-card">
@@ -761,10 +433,6 @@
               <label>SMS Reminder (Twilio)</label>
               <input type="text" class="form-input" id="settingSMS" placeholder="+1234567890">
             </div>
-            <button class="btn-primary" onclick="saveNotificationSettings()">
-              <i class="ph-bold ph-check"></i> حفظ إعدادات التنبيهات
-            </button>
-          </div>
             <button class="btn-primary" onclick="saveNotificationSettings()">
               <i class="ph-bold ph-check"></i> حفظ إعدادات التنبيهات
             </button>
@@ -839,6 +507,12 @@
         <i class="ph-bold ph-x"></i>
       </button>
       <h2 style="margin-bottom: 24px;">حجز موعد جديد</h2>
+      
+      <!-- Step Indicators -->
+      <div style="display: flex; gap: 8px; margin-bottom: 32px; justify-content: center;">
+        <div id="step1Ind" style="width: 40px; height: 4px; background: var(--primary); border-radius: 2px;" class="active"></div>
+        <div id="step2Ind" style="width: 40px; height: 4px; background: var(--border); border-radius: 2px;"></div>
+      </div>
       
       <!-- Step 1: Client Info -->
       <div id="modalStep1">
@@ -953,10 +627,160 @@
     </div>
   </div>
 
+  <!-- Edit Service Modal -->
+  <div class="modal-overlay" id="editServiceModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('editServiceModal')">
+        <i class="ph-bold ph-x"></i>
+      </button>
+      <h2 style="margin-bottom: 24px;">تعديل الخدمة</h2>
+      <input type="hidden" id="editServiceId">
+      <div class="field-group">
+        <label>اسم الخدمة</label>
+        <input type="text" class="field-input" id="editServiceName">
+      </div>
+      <div class="field-group">
+        <label>المدة (دقيقة)</label>
+        <input type="number" class="field-input" id="editServiceDuration">
+      </div>
+      <div class="field-group">
+        <label>السعر (ج.م)</label>
+        <input type="number" class="field-input" id="editServicePrice">
+      </div>
+      <div class="field-group">
+        <label>وصف الخدمة</label>
+        <textarea class="field-input" id="editServiceDesc" rows="3"></textarea>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="btn-primary" onclick="updateService()">حفظ التعديلات</button>
+        <button class="btn-ghost" style="color: var(--error);" onclick="deleteService()">حذف الخدمة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appointment Details Modal -->
+  <div class="modal-overlay" id="aptDetailsModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('aptDetailsModal')">
+        <i class="ph-bold ph-x"></i>
+      </button>
+      <h2 style="margin-bottom: 24px;">تفاصيل الموعد</h2>
+      <input type="hidden" id="editAptId">
+      <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="field-group">
+          <label>العميل</label>
+          <input type="text" class="field-input" id="editAptClientName">
+        </div>
+        <div class="field-group">
+          <label>الهاتف</label>
+          <input type="text" class="field-input" id="editAptClientPhone">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>الخدمة</label>
+        <input type="text" class="field-input" id="editAptService">
+      </div>
+      <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="field-group">
+          <label>التاريخ</label>
+          <input type="date" class="field-input" id="editAptDate">
+        </div>
+        <div class="field-group">
+          <label>الوقت</label>
+          <input type="time" class="field-input" id="editAptTime">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>السعر</label>
+        <input type="number" class="field-input" id="editAptPrice">
+      </div>
+      <div class="field-group">
+        <label>الحالة</label>
+        <select class="field-input" id="editAptStatus">
+          <option value="pending">منتظر</option>
+          <option value="confirmed">مؤكد</option>
+          <option value="completed">مكتمل</option>
+          <option value="cancelled">ملغي</option>
+          <option value="no-show">عدم حضور</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>ملاحظات</label>
+        <textarea class="field-input" id="editAptNotes" rows="2"></textarea>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="btn-primary" onclick="updateAppointment()">تحديث الموعد</button>
+        <button class="btn-ghost" style="color: var(--error);" onclick="deleteAppointment()">حذف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Clients Modal -->
+  <div class="modal-overlay" id="importClientsModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('importClientsModal')">
+        <i class="ph-bold ph-x"></i>
+      </button>
+      <h2 style="margin-bottom: 16px;">استيراد عملاء</h2>
+      <p style="margin-bottom: 24px; color: var(--text-secondary);">اختر ملف CSV يحتوي على بيانات العملاء (الاسم، الهاتف، البريد)</p>
+      <div class="field-group">
+        <input type="file" id="importClientsFile" class="field-input" accept=".csv,.xlsx">
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="btn-primary" onclick="importClientsFromExcel()">بدء الاستيراد</button>
+        <button class="btn-ghost" onclick="closeModal('importClientsModal')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Client Modal -->
+  <div class="modal-overlay" id="editClientModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('editClientModal')">
+        <i class="ph-bold ph-x"></i>
+      </button>
+      <h2 style="margin-bottom: 24px;">تعديل بيانات العميل</h2>
+      <input type="hidden" id="editClientId">
+      <div class="field-group">
+        <label>اسم العميل</label>
+        <input type="text" class="field-input" id="editClientName">
+      </div>
+      <div class="field-group">
+        <label>رقم الهاتف</label>
+        <input type="tel" class="field-input" id="editClientPhone">
+      </div>
+      <div class="field-group">
+        <label>البريد الإلكتروني</label>
+        <input type="email" class="field-input" id="editClientEmail">
+      </div>
+      <div class="field-group">
+        <label>الفئة</label>
+        <select class="field-input" id="editClientCategory">
+          <option value="new">عميل جديد</option>
+          <option value="regular">عميل دائم</option>
+          <option value="vip">VIP</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>الوسوم (مفصولة بفاصلة)</label>
+        <input type="text" class="field-input" id="editClientTags">
+      </div>
+      <div class="field-group">
+        <label>ملاحظات</label>
+        <textarea class="field-input" id="editClientNotes" rows="2"></textarea>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="btn-primary" onclick="updateClient()">حفظ التعديلات</button>
+        <button class="btn-ghost" style="color: var(--error);" onclick="deleteClient()">حذف العميل</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toastContainer"></div>
 
   <!-- Scripts -->
+  <script type="module" src="auth.js"></script>
   <script type="module" src="firebase-config.js"></script>
   <script type="module" src="dashboard.js"></script>
   <script type="module" src="flowai.js"></script>
