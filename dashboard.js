@@ -33,18 +33,26 @@ window.dbg('Starting...');
 // Select common buttons/elements
 let btnSaveAppointment, btnSaveClient, btnSaveService, btnCopyLink, btnSaveNotifications;
 
-// Global exposure
-window.initDashboard = initDashboard;
-window.openModal = openModal;
-window.closeModal = closeModal;
-window.saveAppointment = saveAppointment;
-window.saveNewService = saveNewService;
-window.saveNewClient = saveNewClient;
-window.updateService = updateService;
-window.deleteService = deleteService;
-window.updateClient = updateClient;
-window.deleteClient = deleteClient;
-window.updateAppointment = updateAppointment;
+// Register global functions immediately so proxy bridge can use them
+// The bridge in app.html sets up window.registerFn before modules load
+function reg(name, fn) {
+  if (window.registerFn) {
+    window.registerFn(name, fn);
+  } else {
+    window['_' + name] = fn;
+    window[name] = fn; // direct fallback
+  }
+}
+
+// Expose basic modal functions immediately (may be overridden)
+window.openModal = function(id) {
+  const m = document.getElementById(id);
+  if (m) { m.classList.add('open'); document.body.style.overflow = 'hidden'; }
+};
+window.closeModal = function(id) {
+  const m = document.getElementById(id);
+  if (m) { m.classList.remove('open'); document.body.style.overflow = ''; }
+};
 
 // Global fallback functions (available immediately even before modules load)
 
@@ -93,42 +101,37 @@ if (document.readyState === 'loading') {
 
 // Setup Routing Logic with Event Delegation
 function setupRouting() {
-  console.log("[BookFlow] Initializing routing...");
+  console.log('[BookFlow] Routing ready');
   
   document.addEventListener('click', (e) => {
     const navItem = e.target.closest('.nav-item[data-page]');
     if (!navItem) return;
-
     const page = navItem.getAttribute('data-page');
-    const pageId = page + 'View';
-    console.log("[BookFlow] Navigating to:", pageId);
-    
     e.preventDefault();
     
-    // Update active classes
     document.querySelectorAll('.nav-item[data-page]').forEach(n => n.classList.remove('active'));
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    
     navItem.classList.add('active');
-    const targetView = document.getElementById(pageId);
     
+    const targetView = document.getElementById(page + 'View');
     if (targetView) {
       targetView.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      // Load specific data
-      if(pageId === 'calendarView') {
-        if(window.renderCalendar) window.renderCalendar();
-        else console.warn("[BookFlow] renderCalendar not found");
-      }
-      if(pageId === 'clientsView') loadClients();
-      if(pageId === 'servicesView') loadServices();
-      if(pageId === 'statsView') loadStats();
-      if(pageId === 'settingsView') loadWorkHours();
-    } else {
-      console.error("[BookFlow] View not found:", pageId);
     }
+    
+    // Load data for specific pages
+    if (page === 'clients') loadClients();
+    if (page === 'services') loadServices();
+    if (page === 'stats') loadStats();
+    if (page === 'settings') loadWorkHours();
+    if (page === 'calendar' && window.renderCalendar) window.renderCalendar();
   });
+  
+  // Expose navigation for use from inline JS too
+  window.navigateTo = function(page) {
+    const nav = document.querySelector('.nav-item[data-page="' + page + '"]');
+    if (nav) nav.click();
+  };
 }
 
 // Dashboard initialization is handled at the end of the file.
@@ -1977,6 +1980,49 @@ window.saveSmsSettings = async function() {
     console.error('SMS Settings error:', e);
     showToast('خطأ في الحفظ', 'error');
   }
-};
 
+// ==================== REGISTER ALL GLOBAL FUNCTIONS VIA BRIDGE ====================
+(function registerAllFunctions() {
+  const fns = {
+    initDashboard,
+    openNewAppointmentModal: window.openNewAppointmentModal,
+    saveAppointment: window.saveAppointment,
+    modalGoToStep: window.modalGoToStep,
+    openAptDetails: window.openAptDetails,
+    updateAppointment: window.updateAppointment,
+    deleteAppointment: window.deleteAppointment,
+    saveNewClient: window.saveNewClient,
+    openEditClientModal: window.openEditClientModal,
+    updateClient: window.updateClient,
+    deleteClient: window.deleteClient,
+    searchClients: window.searchClients,
+    saveNewService: window.saveNewService,
+    openEditServiceModal: window.openEditServiceModal,
+    updateService: window.updateService,
+    deleteService: window.deleteService,
+    saveProfileSettings: window.saveProfileSettings,
+    saveSocialSettings: window.saveSocialSettings,
+    saveWorkHours: window.saveWorkHours,
+    savePaymentSettings: window.savePaymentSettings,
+    saveNotificationSettings: window.saveNotificationSettings,
+    saveSmsSettings: window.saveSmsSettings,
+    exportToExcel: window.exportToExcel,
+    exportToPDF: window.exportToPDF,
+    exportToGoogleSheets: window.exportToGoogleSheets,
+    openImportClientsModal: window.openImportClientsModal,
+    importClientsFromExcel: window.importClientsFromExcel,
+    notifyClientViaWA: window.notifyClientViaWA,
+    testWhatsApp: window.testWhatsApp,
+    openWhatsApp: window.openWhatsApp,
+    handleConnectGcal: window.handleConnectGcal,
+  };
+  for (const [name, fn] of Object.entries(fns)) {
+    if (typeof fn === 'function') reg(name, fn);
+  }
+  window.loadServicesGlobal = loadServices;
+  window.loadStatsGlobal = loadStats;
+  window.loadWorkHoursGlobal = loadWorkHours;
+  window.initDashboard = initDashboard;
+  console.log('[BookFlow] All functions registered via bridge \u2705');
+})();
 

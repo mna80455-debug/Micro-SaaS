@@ -786,12 +786,17 @@
   <script type="module" src="flowai.js"></script>
   
   <script>
-    // Auth functions (will be overridden by dashboard.js if needed)
-    window.switchAuth = (mode) => {
-      const loginTab = document.getElementById('tabLogin');
-      const regTab = document.getElementById('tabRegister');
-      const loginFields = document.getElementById('loginFields');
-      const regFields = document.getElementById('registerFields');
+    // ================================================================
+    // GLOBAL BRIDGE — called from onclick="" attributes in this HTML
+    // ES modules run deferred, so we proxy calls to window.* set by modules
+    // ================================================================
+
+    // Auth tabs
+    window.switchAuth = function(mode) {
+      var loginTab = document.getElementById('tabLogin');
+      var regTab = document.getElementById('tabRegister');
+      var loginFields = document.getElementById('loginFields');
+      var regFields = document.getElementById('registerFields');
       if (mode === 'login') {
         loginTab.classList.add('active'); regTab.classList.remove('active');
         loginFields.style.display = 'block'; regFields.style.display = 'none';
@@ -801,10 +806,115 @@
       }
     };
 
-    // Greeting date
-    document.getElementById('greetingDate').textContent = new Date().toLocaleDateString('ar-EG', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
+    // ── Navigation (called before modules load — must be resilient) ──
+    window.navigateTo = function(page) {
+      document.querySelectorAll('.nav-item[data-page]').forEach(function(n) { n.classList.remove('active'); });
+      document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+      var item = document.querySelector('.nav-item[data-page="' + page + '"]');
+      var view = document.getElementById(page + 'View');
+      if (item) item.classList.add('active');
+      if (view) { view.classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      // Trigger data loading
+      if (page === 'clients' && window.searchClients) window.searchClients('');
+      if (page === 'services' && window.loadServicesGlobal) window.loadServicesGlobal();
+      if (page === 'stats' && window.loadStatsGlobal) window.loadStatsGlobal();
+      if (page === 'settings' && window.loadWorkHoursGlobal) window.loadWorkHoursGlobal();
+    };
+
+    // ── Modal helpers (immediate, no module needed) ──
+    window.openModal = function(id) {
+      var m = document.getElementById(id);
+      if (m) { m.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    };
+    window.closeModal = function(id) {
+      var m = document.getElementById(id);
+      if (m) { m.classList.remove('open'); document.body.style.overflow = ''; }
+    };
+
+    // ── Proxy functions — delegate to modules when ready ──
+    function proxy(name) {
+      return function() {
+        var args = arguments;
+        if (typeof window['_' + name] === 'function') {
+          return window['_' + name].apply(this, args);
+        } else {
+          // Queue call until module loads
+          window._pendingCalls = window._pendingCalls || [];
+          window._pendingCalls.push({ fn: name, args: args });
+          console.warn('[BookFlow] Function not ready yet:', name);
+        }
+      };
+    }
+
+    // Auth functions
+    window.handleAuth           = proxy('handleAuth');
+    window.handleRegister       = proxy('handleRegister');
+    window.handleGoogleAuth     = proxy('handleGoogleAuth');
+    window.handleLogout         = proxy('handleLogout');
+
+    // Appointment functions
+    window.openNewAppointmentModal = proxy('openNewAppointmentModal');
+    window.saveAppointment      = proxy('saveAppointment');
+    window.openAptDetails       = proxy('openAptDetails');
+    window.updateAppointment    = proxy('updateAppointment');
+    window.deleteAppointment    = proxy('deleteAppointment');
+    window.modalGoToStep        = proxy('modalGoToStep');
+    window.notifyClientViaWA    = proxy('notifyClientViaWA');
+
+    // Client functions
+    window.saveNewClient        = proxy('saveNewClient');
+    window.openEditClientModal  = proxy('openEditClientModal');
+    window.updateClient         = proxy('updateClient');
+    window.deleteClient         = proxy('deleteClient');
+    window.searchClients        = proxy('searchClients');
+
+    // Service functions
+    window.saveNewService       = proxy('saveNewService');
+    window.openEditServiceModal = proxy('openEditServiceModal');
+    window.updateService        = proxy('updateService');
+    window.deleteService        = proxy('deleteService');
+
+    // Settings functions
+    window.saveProfileSettings      = proxy('saveProfileSettings');
+    window.saveSocialSettings       = proxy('saveSocialSettings');
+    window.saveWorkHours            = proxy('saveWorkHours');
+    window.savePaymentSettings      = proxy('savePaymentSettings');
+    window.saveNotificationSettings = proxy('saveNotificationSettings');
+    window.saveSmsSettings          = proxy('saveSmsSettings');
+
+    // Export functions
+    window.exportToExcel        = proxy('exportToExcel');
+    window.exportToPDF          = proxy('exportToPDF');
+    window.exportToGoogleSheets = proxy('exportToGoogleSheets');
+    window.openImportClientsModal = proxy('openImportClientsModal');
+    window.importClientsFromExcel = proxy('importClientsFromExcel');
+
+    // AI functions
+    window.toggleFlowAI         = proxy('toggleFlowAI');
+    window.sendToFlowAI         = proxy('sendToFlowAI');
+    window.handleConnectGcal    = proxy('handleConnectGcal');
+    window.testWhatsApp         = proxy('testWhatsApp');
+    window.openWhatsApp         = proxy('openWhatsApp');
+
+    // ── Helper: modules call this to register real implementations ──
+    window.registerFn = function(name, fn) {
+      window['_' + name] = fn;
+      // Flush any queued calls for this function
+      if (window._pendingCalls) {
+        window._pendingCalls = window._pendingCalls.filter(function(c) {
+          if (c.fn === name) { fn.apply(null, c.args); return false; }
+          return true;
+        });
+      }
+    };
+
+    // ── Greeting date (safe to run immediately) ──
+    var greetingDateEl = document.getElementById('greetingDate');
+    if (greetingDateEl) {
+      greetingDateEl.textContent = new Date().toLocaleDateString('ar-EG', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+    }
   </script>
 </body>
 </html>

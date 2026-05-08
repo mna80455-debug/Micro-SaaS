@@ -1,7 +1,7 @@
 // flowai.js — FlowAI Smart Assistant - Enhanced
 
 // ===== TOGGLE PANEL =====
-window.toggleFlowAI = function () {
+const _toggleFlowAI = function () {
   const panel = document.getElementById('flowAiPanel');
   const fab = document.getElementById('flowAiFab');
   if(panel) {
@@ -12,7 +12,7 @@ window.toggleFlowAI = function () {
 };
 
 // ===== SEND MESSAGE =====
-window.sendToFlowAI = async function () {
+const _sendToFlowAI = async function () {
   const input = document.getElementById('flowAiInput');
   const text = input?.value.trim();
   if (!text) return;
@@ -269,10 +269,23 @@ window.loadAIRecommendations = async function() {
 };
 
 // Auto-open recommendations on dashboard load
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.currentUser) {
-    setTimeout(() => {
-      window.loadAIRecommendations?.();
-    }, 2000);
-  }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initFlowAI);
+} else {
+  _initFlowAI();
+}
+function _initFlowAI() {
+  if (window.currentUser) setTimeout(() => window.loadAIRecommendations?.(), 2000);
+}
+
+// Register via bridge
+if (window.registerFn) {
+  window.registerFn('toggleFlowAI', _toggleFlowAI);
+  window.registerFn('sendToFlowAI', _sendToFlowAI);
+} else {
+  window._toggleFlowAI = _toggleFlowAI;
+  window._sendToFlowAI = _sendToFlowAI;
+}
+// Direct window assignment as fallback
+window.toggleFlowAI = _toggleFlowAI;
+window.sendToFlowAI = _sendToFlowAI;

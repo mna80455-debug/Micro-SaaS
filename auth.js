@@ -158,7 +158,8 @@ window.handleRegister = async () => {
   }
 };
 
-window.handleGoogleAuth = async (e) => {
+// Register all auth functions via proxy bridge
+const _handleGoogleAuth = async (e) => {
   if(e) e.preventDefault();
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -169,12 +170,61 @@ window.handleGoogleAuth = async (e) => {
   }
 };
 
-window.handleLogout = async () => {
+const _handleLogout = async () => {
   try {
     await signOut(auth);
     showToast('تم تسجيل الخروج', 'success');
-    window.location.reload(); // Hard reload to clear state
+    window.location.reload();
   } catch (e) {
     showToast('حدث خطأ', 'error');
   }
 };
+
+const _handleAuth = async () => {
+  const email = document.getElementById('aEmail').value.trim();
+  const password = document.getElementById('aPass').value;
+  if (!email || !password) { showToast('يرجى تعبئة الحقول المطلوبة', 'error'); return; }
+  const btn = document.getElementById('btnMainAuth');
+  if(btn) btn.disabled = true;
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    showToast('تم تسجيل الدخول بنجاح', 'success');
+  } catch (error) {
+    const msgs = { 'auth/wrong-password': 'كلمة المرور غير صحيحة ❌', 'auth/user-not-found': 'الإيميل غير مسجل ❌', 'auth/invalid-credential': 'بيانات الدخول غير صحيحة ❌', 'auth/invalid-email': 'إيميل غير صحيح ❌' };
+    showToast(msgs[error.code] || 'خطأ: ' + error.code, 'error');
+  } finally { if(btn) btn.disabled = false; }
+};
+
+const _handleRegister = async () => {
+  const name = document.getElementById('rName').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const password = document.getElementById('rPass').value;
+  if (!name || !email || !password) { showToast('يرجى تعبئة كافة الحقول', 'error'); return; }
+  const btn = document.getElementById('btnRegister');
+  if(btn) btn.disabled = true;
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, 'users', result.user.uid), {
+      profile: { name, email, createdAt: Date.now(), plan: 'free', businessName: '' },
+      settings: { bookingLink: result.user.uid.substring(0, 8), slotDuration: 30 }
+    });
+    showToast('تم إنشاء الحساب بنجاح 🎉', 'success');
+  } catch (error) {
+    const msgs = { 'auth/email-already-in-use': 'الإيميل مستخدم مسبقاً ❌', 'auth/weak-password': 'كلمة المرور ضعيفة جداً ❌', 'auth/invalid-email': 'إيميل غير صحيح ❌' };
+    showToast(msgs[error.code] || 'خطأ: ' + error.code, 'error');
+  } finally { if(btn) btn.disabled = false; }
+};
+
+// Register via bridge (works even if modules load after HTML script)
+if (window.registerFn) {
+  window.registerFn('handleAuth', _handleAuth);
+  window.registerFn('handleRegister', _handleRegister);
+  window.registerFn('handleGoogleAuth', _handleGoogleAuth);
+  window.registerFn('handleLogout', _handleLogout);
+} else {
+  // Fallback: direct assignment
+  window._handleAuth = _handleAuth;
+  window._handleRegister = _handleRegister;
+  window._handleGoogleAuth = _handleGoogleAuth;
+  window._handleLogout = _handleLogout;
+}
